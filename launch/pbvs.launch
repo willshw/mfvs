@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+
+<!-- PBVS Node -->
+	<node name="pbvs" pkg="arm_vs" type="arm_vs_pbvs" output="screen">
+		<param name="desired_camera_frame" value="desired_cam_frame" type="string"/>
+		<param name="current_camera_frame" value="camera_rgb_optical_frame" type="string"/>
+        <param name="robot_body_frame" value="mico_link_base" type="string"/>
+	</node>
+
+</launch>
