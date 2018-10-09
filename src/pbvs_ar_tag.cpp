@@ -36,48 +36,60 @@ class VisualServoing{
         tf2_ros::Buffer tf_buffer;
         tf2_ros::TransformListener* tf_listener;
         geometry_msgs::TransformStamped tf_transform;
+        ros::Publisher cart_vel_pub;
+
+        //parameters
+        double pbvs_control_loop_hz;
+        double pbvs_control_law_gain_lambda;
+        double pbvs_control_deadband_error;
+
         std::string desired_camera_frame;
         std::string current_camera_frame;
         std::string robot_body_frame;
 
-        ros::Publisher cart_vel_pub;
         std::string control_input_topic;
         double control_input_topic_hz;
 
-        // camera velocity
-        // end effector velocity
+        arm_vs::CartVelCmd control_input;
 
     public:
         void getParametersValues(){
+            nh.param<double>("pbvs_control_loop_hz", pbvs_control_loop_hz, 50.0);
+            ROS_INFO("PBVS Control Loop Frequency: %f", pbvs_control_loop_hz);
+
+            nh.param<double>("pbvs_control_gain_lambda", pbvs_control_law_gain_lambda, 1.0);
+            ROS_INFO("PBVS Control Law Gain(Lambda): %f", pbvs_control_law_gain_lambda);
+
+            nh.param<double>("pbvs_control_deadband_error", pbvs_control_deadband_error, 0.0001);
+            ROS_INFO("PBVS Control Deadband Error: %f", pbvs_control_deadband_error);
+
             if(!nh.hasParam("desired_camera_frame") || !nh.hasParam("current_camera_frame")){
-                ROS_INFO("Camera frame parameters are not correctly set!");
+                ROS_FATAL("Camera frame parameters are not correctly set!");
             }
             else{
                 nh.param<std::string>("desired_camera_frame", desired_camera_frame, "/desired_cam_frame");
                 nh.param<std::string>("current_camera_frame", current_camera_frame, "/camera_rgb_optical_frame");
-            
                 ROS_INFO("\nDesired camera frame: %s \nCurrent camera frame: %s", desired_camera_frame.c_str(), current_camera_frame.c_str());
             }
 
             if(!nh.hasParam("robot_body_frame")){
-                ROS_INFO("Robot body frame is not correctly set!");
+                ROS_FATAL("Robot body frame is not correctly set!");
             }
             else{
                 nh.param<std::string>("robot_body_frame", robot_body_frame, "/robot_body_frame");
-
                 ROS_INFO("Robot body frame: %s", robot_body_frame.c_str());
             }
 
             if(!nh.hasParam("control_input_topic")){
-                ROS_INFO("Control input topic is not correctly set!");
+                ROS_FATAL("Control input topic is not correctly set!");
             }
             else{
                 nh.param<std::string>("control_input_topic", control_input_topic, "/control_input");
-                nh.param<double>("control_input_topic_hz", control_input_topic_hz, 50.0);
-
                 ROS_INFO("Control input topic: %s", control_input_topic.c_str());
-                ROS_INFO("Control input topic frequenct: %f", control_input_topic_hz);
             }
+
+            nh.param<double>("control_input_topic_hz", control_input_topic_hz, 50.0);
+            ROS_INFO("Control input topic frequenct: %f", control_input_topic_hz);
         }
 
         void getTwistVectorBodyFrame(Eigen::VectorXd& Vb, Eigen::VectorXd Vc, Eigen::Matrix4d bMc){
@@ -101,27 +113,29 @@ class VisualServoing{
             // calculate twist in body frame using adjoint and twist in camera frame
             Vb = bAdc * Vc;
 
-            std::stringstream ss;
-            ss.str(std::string());
-            ss << "Vb:\n" << Vb << "\n";
-            ROS_INFO("\n%s", ss.str().c_str());
+            // std::stringstream ss;
+            // ss.str(std::string());
+            // ss << "Vb:\n" << Vb << "\n";
+            // ROS_INFO("\n%s", ss.str().c_str());
         }
 
         void pbvs(){
+            vpHomogeneousMatrix cdMc; // ... cdMc is here the result of a pose estimation
 
-            vpHomogeneousMatrix cdMc;
-            // ... cdMc is here the result of a pose estimation
             // Creation of the current visual feature s = (c*_t_c, ThetaU)
             vpFeatureTranslation s_t(vpFeatureTranslation::cdMc);
             vpFeatureThetaU s_tu(vpFeatureThetaU::cdRc);
+
             // Set the initial values of the current visual feature s = (c*_t_c, ThetaU)
             s_t.buildFrom(cdMc);
             s_tu.buildFrom(cdMc);
+
             // Build the desired visual feature s* = (0,0)
             vpFeatureTranslation s_star_t(vpFeatureTranslation::cdMc); // Default initialization to zero
             vpFeatureThetaU s_star_tu(vpFeatureThetaU::cdRc); // Default initialization to zero
             vpColVector v; // Camera velocity
             double error = 1.0;  // Task error
+
             // Creation of the visual servo task.
             vpServo task;
             // Visual servo task initialization
@@ -131,7 +145,7 @@ class VisualServoing{
             // - Interaction matrix is computed with the current visual features s
             task.setInteractionMatrixType(vpServo::CURRENT);
             // - Set the contant gain to 1
-            task.setLambda(1);
+            task.setLambda(pbvs_control_law_gain_lambda);
             // - Add current and desired translation feature
             task.addFeature(s_t, s_star_t);
             // - Add current and desired ThetaU feature for the rotation
@@ -140,11 +154,11 @@ class VisualServoing{
             // features s = (c*_t_c, ThetaU), compute the control law and apply
             // it to the robot
 
-            ros::Rate rate(30.0);
-            while(nh.ok() && (error > 0.0001)){
+            ros::Rate rate(pbvs_control_loop_hz);
+            while(nh.ok()){
                 try{
                     // lookup desired camera from and current camera frame transform
-                    tf_transform = tf_buffer.lookupTransform(current_camera_frame, desired_camera_frame, ros::Time::now(), ros::Duration(3.0));
+                    tf_transform = tf_buffer.lookupTransform(desired_camera_frame, current_camera_frame, ros::Time::now(), ros::Duration(3.0));
 
                     // convert transform to vpHomogeneousMatrix
                     double t_x = tf_transform.transform.translation.x;
@@ -160,7 +174,7 @@ class VisualServoing{
                     vpQuaternionVector quat_vec;
                     quat_vec.buildFrom(q_x, q_y, q_z, q_w);
 
-                    vpHomogeneousMatrix cdMc;
+                    // vpHomogeneousMatrix cdMc;
                     cdMc.buildFrom(trans_vec, quat_vec);
 
                     // PBVS
@@ -169,12 +183,18 @@ class VisualServoing{
                     s_t.buildFrom(cdMc);  // Update translation visual feature
                     s_tu.buildFrom(cdMc); // Update ThetaU visual feature
                     v = task.computeControlLaw(); // Compute camera velocity skew
-                    error =  ( task.getError() ).sumSquare(); // error = s^2 - s_star^2
-
+                    error = (task.getError()).sumSquare(); // error = s^2 - s_star^2
+        
                     // convert twist in camera frame to body frame
                     // rearranging twist from [v w] to [w v]
                     Eigen::VectorXd Vc(6);
                     Vc << v[3], v[4], v[5], v[0], v[1], v[2];
+
+                    std::stringstream ss;
+                    ss.str(std::string());
+                    ss << "v:\n" << Vc << "\n";
+                    ss << "error: " << error << "\n";
+                    ROS_INFO("\n%s", ss.str().c_str());
 
                     // lookup desired camera from and robot body frame transform
                     Eigen::VectorXd Vb(6);
@@ -182,8 +202,12 @@ class VisualServoing{
                     getTwistVectorBodyFrame(Vb, Vc, tf2::transformToEigen(tf_transform).matrix());
 
                     // command end effector twist to robot
-                    arm_vs::CartVelCmd control_input;
-                    control_input.velocity.data = {Vb[3], Vb[4], Vb[5], Vb[0], Vb[1], Vb[2]};
+                    if(error >= pbvs_control_deadband_error){
+                        control_input.velocity.data = {Vb[3], Vb[4], Vb[5], Vb[0], Vb[1], Vb[2]};
+                    }
+                    else{
+                        control_input.velocity.data = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+                    }
                     cart_vel_pub.publish(control_input);
                 }
                 catch(tf2::TransformException ex){

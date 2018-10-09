@@ -26,8 +26,8 @@
 
     <!-- <node name="image_proc" pkg="image_proc" type="image_proc" ns="camera/rgb"></node> -->
 
-    <node name="static_tf_node_desired_camera_frame" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0.2 -1 0 0 0 ar_marker_0 desired_cam_frame"/>
+    <node name="static_tf_node_desired_camera_frame" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0.4 -1 0 0 0 ar_marker_0 desired_cam_frame"/>
 
-	<include file="$(find arm_vs)/launch/pbvs.launch"/>
+	<!-- <include file="$(find arm_vs)/launch/pbvs.launch"/> -->
 
 </launch>
