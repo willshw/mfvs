@@ -68,12 +68,12 @@ class VisualServoing{
         }
 
         void getTwistVectorBodyFrame(Eigen::VectorXd& Vb, Eigen::VectorXd Vc, Eigen::Matrix4d bMc){
-            std::stringstream ss;
+            // std::stringstream ss;
             // ROS_INFO("Here");
             // Eigen::Matrix4d cMb = cMb_affine.matrix();
 
-            ss << "Vc:\n" << Vc << "\n";
-            ROS_INFO("\n%s", ss.str().c_str());
+            // ss << "Vc:\n" << Vc << "\n";
+            // ROS_INFO("\n%s", ss.str().c_str());
 
             // calculate adjoint using input transformation
             // [  R  0]
@@ -107,9 +107,9 @@ class VisualServoing{
             // calculate twist in body frame using adjoint and twist in camera frame
             Vb = bAdc * Vc;
 
-            ss.str(std::string());
-            ss << "Vb:\n" << Vb << "\n";
-            ROS_INFO("\n%s", ss.str().c_str());
+            // ss.str(std::string());
+            // ss << "Vb:\n" << Vb << "\n";
+            // ROS_INFO("\n%s", ss.str().c_str());
         }
 
         void pbvs(){
@@ -177,14 +177,14 @@ class VisualServoing{
                     error =  ( task.getError() ).sumSquare(); // error = s^2 - s_star^2
                 
                     // std_msgs::String msg;
-                    std::stringstream ss;
-                    ss << "V:";
-                    for (int i = 0; i < v.size(); i++)
-                        ss << ' ' << v[i];
-                    ss << '\n';
-                    // msg.data = ss.str();
-                    // pub.publish(msg);
-                    ROS_INFO("%s", ss.str().c_str());
+                    // std::stringstream ss;
+                    // ss << "V:";
+                    // for (int i = 0; i < v.size(); i++)
+                    //     ss << ' ' << v[i];
+                    // ss << '\n';
+                    // // msg.data = ss.str();
+                    // // pub.publish(msg);
+                    // ROS_INFO("%s", ss.str().c_str());
 
                     // convert twist in camera frame to body frame
                     // rearranging twist from [v w] to [w v]
