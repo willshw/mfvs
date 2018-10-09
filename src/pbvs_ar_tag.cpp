@@ -32,15 +32,17 @@
 class VisualServoing{
     private:
         ros::NodeHandle nh;
-        ros::Publisher cart_vel_pub = nh.advertise<arm_vs::CartVelCmd>("control_input", 50);
 
         tf2_ros::Buffer tf_buffer;
         tf2_ros::TransformListener* tf_listener;
         geometry_msgs::TransformStamped tf_transform;
-
         std::string desired_camera_frame;
         std::string current_camera_frame;
         std::string robot_body_frame;
+
+        ros::Publisher cart_vel_pub;
+        std::string control_input_topic;
+        double control_input_topic_hz;
 
         // camera velocity
         // end effector velocity
@@ -65,25 +67,25 @@ class VisualServoing{
 
                 ROS_INFO("Robot body frame: %s", robot_body_frame.c_str());
             }
+
+            if(!nh.hasParam("control_input_topic")){
+                ROS_INFO("Control input topic is not correctly set!");
+            }
+            else{
+                nh.param<std::string>("control_input_topic", control_input_topic, "/control_input");
+                nh.param<double>("control_input_topic_hz", control_input_topic_hz, 50.0);
+
+                ROS_INFO("Control input topic: %s", control_input_topic.c_str());
+                ROS_INFO("Control input topic frequenct: %f", control_input_topic_hz);
+            }
         }
 
         void getTwistVectorBodyFrame(Eigen::VectorXd& Vb, Eigen::VectorXd Vc, Eigen::Matrix4d bMc){
-            std::stringstream ss;
-            // ROS_INFO("Here");
-            // Eigen::Matrix4d cMb = cMb_affine.matrix();
-
-            ss << "Vc:\n" << Vc << "\n";
-            ROS_INFO("\n%s", ss.str().c_str());
-
             // calculate adjoint using input transformation
             // [  R  0]
             // [[tR] R]
             Eigen::Matrix3d bRc = bMc.block<3,3>(0,0); // rotation
             Eigen::Vector3d btc = bMc.block<3,1>(0,3); // translation
-
-            // ss.str(std::string());
-            // ss << "Roataion Matrix:\n" << cRb << "\n" << "Translation Vector:\n" << ctb << "\n";
-            // ROS_INFO("\n%s", ss.str().c_str());
 
             // skew symmetric [t]
             Eigen::Matrix3d btc_s;
@@ -91,22 +93,15 @@ class VisualServoing{
                     btc(2), 0, -btc(0),
                     -btc(1), btc(0), 0;
 
-            // ss.str(std::string());
-            // ss << "Roataion Skew Matrix:\n" << ctb_s << "\n";
-            // ROS_INFO("\n%s", ss.str().c_str());
-
+            // Adjoint
             Eigen::MatrixXd bAdc(6, 6);
-            
             bAdc << bRc, Eigen::Matrix3d::Zero(), 
                     btc_s*bRc, bRc;
-
-            // ss.str(std::string());
-            // ss << "Adjoint Matrix:\n" << cAdb << "\n";
-            // ROS_INFO("\n%s", ss.str().c_str());
 
             // calculate twist in body frame using adjoint and twist in camera frame
             Vb = bAdc * Vc;
 
+            std::stringstream ss;
             ss.str(std::string());
             ss << "Vb:\n" << Vb << "\n";
             ROS_INFO("\n%s", ss.str().c_str());
@@ -175,16 +170,6 @@ class VisualServoing{
                     s_tu.buildFrom(cdMc); // Update ThetaU visual feature
                     v = task.computeControlLaw(); // Compute camera velocity skew
                     error =  ( task.getError() ).sumSquare(); // error = s^2 - s_star^2
-                
-                    // std_msgs::String msg;
-                    std::stringstream ss;
-                    ss << "V:";
-                    for (int i = 0; i < v.size(); i++)
-                        ss << ' ' << v[i];
-                    ss << '\n';
-                    // msg.data = ss.str();
-                    // pub.publish(msg);
-                    ROS_INFO("%s", ss.str().c_str());
 
                     // convert twist in camera frame to body frame
                     // rearranging twist from [v w] to [w v]
@@ -195,15 +180,6 @@ class VisualServoing{
                     Eigen::VectorXd Vb(6);
                     tf_transform = tf_buffer.lookupTransform(current_camera_frame, robot_body_frame, ros::Time::now(), ros::Duration(3.0));
                     getTwistVectorBodyFrame(Vb, Vc, tf2::transformToEigen(tf_transform).matrix());
-
-                    // try{
-                    //     tf_listener.lookupTransform(current_camera_frame, desired_camera_frame, ros::Time(0), tf_transform);
-                    // }
-                    // catch(tf::TransformException ex){
-                    //     ROS_ERROR("%s", ex.what());
-                    //     ros::Duration(1.0).sleep();
-                    // }
-
 
                     // command end effector twist to robot
                     arm_vs::CartVelCmd control_input;
@@ -221,9 +197,11 @@ class VisualServoing{
 
         VisualServoing(ros::NodeHandle node_handle){
             nh = node_handle;
-            tf_listener = new tf2_ros::TransformListener(tf_buffer);
-
             getParametersValues();
+
+            tf_listener = new tf2_ros::TransformListener(tf_buffer);
+            cart_vel_pub = nh.advertise<arm_vs::CartVelCmd>(control_input_topic, control_input_topic_hz);
+
             pbvs();
         }
 };
