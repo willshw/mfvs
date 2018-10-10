@@ -10,11 +10,17 @@ add_compile_options(-std=c++11)
 find_package(
   catkin REQUIRED COMPONENTS
   roscpp
-  geometry_msgs
+
   std_msgs
+  geometry_msgs
+  sensor_msgs
+
   tf2
   tf2_ros
   tf2_eigen
+
+  cv_bridge
+  image_transport
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
@@ -63,17 +69,18 @@ add_dependencies(${PROJECT_NAME}_pbvs
   arm_vs_generate_messages_cpp
 )
 
-# apriltag_detector
-# add_executable(${PROJECT_NAME}_apriltag_detector
-#   src/april_proc.cpp
-# )
+#visual tracking
+add_executable(${PROJECT_NAME}_visual_tracking
+  src/visual_tracking.cpp
+)
 
-# target_link_libraries(${PROJECT_NAME}_apriltag_detector
-#   ${catkin_LIBRARIES}
-#   ${OpenCV_LIBRARIES}
-#   ${roscpp_LIBRARIES}
-# )
+target_link_libraries(${PROJECT_NAME}_visual_tracking
+  ${catkin_LIBRARIES}
+  ${roscpp_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${VISP_LIBRARIES}
+)
 
-# add_dependencies(${PROJECT_NAME}_apriltag_detector
-#   ${catkin_EXPORTED_TARGETS}
-# )
+add_dependencies(${PROJECT_NAME}_visual_tracking
+  ${catkin_EXPORTED_TARGETS}
+)
