@@ -53,6 +53,16 @@ class VisualServoing{
         arm_vs::CartVelCmd control_input;
 
     public:
+        VisualServoing(ros::NodeHandle node_handle){
+            nh = node_handle;
+            VisualServoing::getParametersValues();
+
+            tf_listener = new tf2_ros::TransformListener(tf_buffer);
+            cart_vel_pub = nh.advertise<arm_vs::CartVelCmd>(control_input_topic, control_input_topic_hz);
+
+            VisualServoing::pbvs();
+        }
+        
         void getParametersValues(){
             nh.param<double>("pbvs_control_loop_hz", pbvs_control_loop_hz, 50.0);
             ROS_INFO("PBVS Control Loop Frequency: %f", pbvs_control_loop_hz);
@@ -217,16 +227,6 @@ class VisualServoing{
                 rate.sleep();
             }
             task.kill();
-        }
-
-        VisualServoing(ros::NodeHandle node_handle){
-            nh = node_handle;
-            getParametersValues();
-
-            tf_listener = new tf2_ros::TransformListener(tf_buffer);
-            cart_vel_pub = nh.advertise<arm_vs::CartVelCmd>(control_input_topic, control_input_topic_hz);
-
-            pbvs();
         }
 };
 
