@@ -21,12 +21,14 @@ find_package(
 
   cv_bridge
   image_transport
+  pcl_ros
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(VISP REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(PCL REQUIRED)
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
@@ -34,6 +36,7 @@ include_directories(
   ${VISP_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 add_message_files(
@@ -49,7 +52,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES arm-vs
-  CATKIN_DEPENDS roscpp std_msgs geometry_msgs
+  CATKIN_DEPENDS roscpp std_msgs geometry_msgs pcl_ros
 #  DEPENDS system_lib
 )
 
@@ -82,5 +85,21 @@ target_link_libraries(${PROJECT_NAME}_visual_tracking
 )
 
 add_dependencies(${PROJECT_NAME}_visual_tracking
+  ${catkin_EXPORTED_TARGETS}
+)
+
+#point cloud tracking
+add_executable(${PROJECT_NAME}_pointcloud_tracking
+  src/pointcloud_tracking_node.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}_pointcloud_tracking
+  ${catkin_LIBRARIES}
+  ${roscpp_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${PCL_LIBRARIES}
+)
+
+add_dependencies(${PROJECT_NAME}_pointcloud_tracking
   ${catkin_EXPORTED_TARGETS}
 )
