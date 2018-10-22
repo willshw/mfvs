@@ -1,0 +1,37 @@
+<launch>
+    <!-- Nodelet manager for this pipeline -->
+    <node pkg="nodelet" type="nodelet" args="manager" name="pcl_manager" output="screen"/>
+
+    <!-- Construct point cloud of the rgb and depth topics -->
+    <!-- <node pkg="nodelet" type="nodelet" name="depth_image_proc" args="load depth_image_proc/point_cloud_xyzrgb standalone_nodelet" output="screen">
+        <remap from="rgb/camera_info"               to="$(arg rgb_camera_info)" />
+        <remap from="rgb/image_rect_color"          to="$(arg rgb_camera_image)"/>
+        <remap from="depth_registered/image_rect"   to="$(arg depth_camera_image)"/>
+        <remap from="depth_registered/points"       to="$(arg out_cloud)"/>
+    </node> -->
+
+    <!-- Pass through nodelet to keep point cloud in a range -->
+    <node pkg="nodelet" type="nodelet" name="passthrough" args="load pcl/PassThrough pcl_manager" output="screen">
+        <remap from="~input" to="/camera/depth/points"/>
+        <rosparam>
+            filter_fieldname: z
+            filter_limit_min: 0.01
+            filter_limit_max: 1.5
+            filter_limit_nefative: False
+        </rosparam>
+    </node>
+
+    <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+    <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
+        <remap from="~input" to="/passthrough/output"/>
+        <rosparam>
+        filter_field_name: z
+        filter_limit_min: 0.01
+        filter_limit_max: 1.5
+        filter_limit_negative: False
+        leaf_size: 0.01
+        </rosparam>
+    </node>
+
+    <include file="$(find openni2_launch)/launch/openni2.launch"/>
+</launch>
