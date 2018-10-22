@@ -74,24 +74,24 @@ add_dependencies(${PROJECT_NAME}_pbvs
 )
 
 #visual tracking
-add_executable(${PROJECT_NAME}_visual_tracking
-  src/visual_tracking.cpp
+add_executable(${PROJECT_NAME}_visp_model_based_tracking
+  src/_visp_model_based_tracking.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_visual_tracking
+target_link_libraries(${PROJECT_NAME}_visp_model_based_tracking
   ${catkin_LIBRARIES}
   ${roscpp_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${VISP_LIBRARIES}
 )
 
-add_dependencies(${PROJECT_NAME}_visual_tracking
+add_dependencies(${PROJECT_NAME}_visp_model_based_tracking
   ${catkin_EXPORTED_TARGETS}
 )
 
 #point cloud tracking
 add_executable(${PROJECT_NAME}_pointcloud_tracking
-  src/pointcloud_tracking_node.cpp
+  src/pointcloud_tracking.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_pointcloud_tracking
@@ -106,16 +106,16 @@ add_dependencies(${PROJECT_NAME}_pointcloud_tracking
 )
 
 #visual tracking
-add_executable(${PROJECT_NAME}_2d_tracking
-  src/2d_tracking.cpp
+add_executable(${PROJECT_NAME}_cv_tracking
+  src/cv_tracking.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_2d_tracking
+target_link_libraries(${PROJECT_NAME}_cv_tracking
   ${catkin_LIBRARIES}
   ${roscpp_LIBRARIES}
   ${OpenCV_LIBRARIES}
 )
 
-add_dependencies(${PROJECT_NAME}_2d_tracking
+add_dependencies(${PROJECT_NAME}_cv_tracking
   ${catkin_EXPORTED_TARGETS}
 )
