@@ -8,7 +8,7 @@ add_compile_options(-std=c++11)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(
-  catkin REQUIRED COMPONENTS
+  catkin REQUIRED
   roscpp
 
   std_msgs
@@ -31,6 +31,7 @@ find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
 
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${VISP_INCLUDE_DIRS}
@@ -50,10 +51,10 @@ generate_messages(
 )
 
 catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES arm-vs
+  INCLUDE_DIRS include ${OpenCV_INCLUDE_DIRS}
+  LIBRARIES arm-vs ${OpenCV_LIBRARIES}
   CATKIN_DEPENDS roscpp std_msgs geometry_msgs pcl_ros
-#  DEPENDS system_lib
+  DEPENDS OpenCV Eigen3 PCL VISP Boost
 )
 
 # PBVS
@@ -104,7 +105,7 @@ add_dependencies(${PROJECT_NAME}_pointcloud_tracking
   ${catkin_EXPORTED_TARGETS}
 )
 
-#point cloud tracking
+#visual tracking
 add_executable(${PROJECT_NAME}_2d_tracking
   src/2d_tracking.cpp
 )

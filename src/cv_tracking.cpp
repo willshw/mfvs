@@ -6,10 +6,13 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/tracking/tracker.hpp>
 #include <opencv2/tracking.hpp>
 #include <opencv2/core/ocl.hpp>
 
-class Tracking {
+using namespace cv;
+
+class Tracker {
     private:
         ros::NodeHandle nh;
 
@@ -76,7 +79,7 @@ class Tracking {
                 float fps = cv::getTickFrequency() / ((double)cv::getTickCount() - timer);
                 
                 if (ok){
-                    // Tracking success : Draw the tracked object
+                    // Tracker success : Draw the tracked object
                     cv::rectangle(*frame, bbox, cv::Scalar( 255, 0, 0 ), 2, 1 );
                 }
                 else{
@@ -101,12 +104,12 @@ class Tracking {
         }
 
     public:
-        Tracking (ros::NodeHandle node_handle)
+        Tracker (ros::NodeHandle node_handle)
         :img_trans (nh){
             nh = node_handle;
-            Tracking::getParametersValues();
+            Tracker::getParametersValues();
 
-            img_sub = img_trans.subscribe(input_image_topic, 1, &Tracking::imageSubCallback, this);
+            img_sub = img_trans.subscribe(input_image_topic, 1, &Tracker::imageSubCallback, this);
             img_pub = img_trans.advertise(output_image_topic, 1);
 
             if (tracker_type == "BOOSTING")
@@ -121,8 +124,8 @@ class Tracking {
                 tracker = cv::TrackerMedianFlow::create();
             if (tracker_type == "MOSSE")
                 tracker = cv::TrackerMOSSE::create();
-            // if (tracker_type == "CSRT")
-            //     tracker = cv::TrackerCSRT::create();
+            if (tracker_type == "CSRT")
+                tracker = TrackerCSRT::create();
 
             bbox = cv::Rect2d(0, 0, 1, 1);
             initialized = false;
@@ -132,7 +135,7 @@ class Tracking {
 int main (int argc, char** argv){
     ros::init (argc, argv, "obj_tracking");
     ros::NodeHandle nh ("~");
-    Tracking tracker (nh);
+    Tracker tracker (nh);
 
     ros::spin();
     return 0;

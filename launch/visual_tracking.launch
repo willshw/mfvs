@@ -4,22 +4,24 @@
         <param name="video_device" type="string" value="/dev/v4l/by-id/usb-Bison_BisonCam_NB_Pro_200901010001-video-index0" />
         <param name="image_width" type="int" value="640" />
         <param name="image_height" type="int" value="480" />
-        <param name="pixel_format" type="string" value="mjpeg" />
+        <param name="pixel_format" type="string" value="yuyv" />
         <param name="framerate" type="int" value="30" />
     </node>
 
     <node name="image_view" pkg="rqt_image_view" type="rqt_image_view" respawn="false" output="screen" />
 
-    <!-- <node name="visual_tracking" pkg="arm_vs" type="arm_vs_visual_tracking" output="screen">
-        <param name="input_image_topic" type="string" value="/usb_cam/image_raw" />
-        <param name="output_image_topic" type="string" value="/tracking" />
-        <parma name="model_filename" type="string" value="25mm_cube" />
+    <node name="image_proc" pkg="image_proc" type="image_proc" ns="/usb_cam"/>
+
+    <!-- <node name="visual_tracking" pkg="arm_vs" type="arm_vs_2d_tracking" output="screen">
+        <param name="input_image_topic" type="string" value="/usb_cam/image_mono" />
+        <param name="output_image_topic" type="string" value="/tracked_frame" />
+        <param name="tracker_type" type="string" value="KCF" />
     </node> -->
 
-    <node name="visual_tracking" pkg="arm_vs" type="arm_vs_2d_tracking" output="screen">
-        <param name="input_image_topic" type="string" value="/usb_cam/image_raw" />
+    <node name="visual_tracking" pkg="arm_vs" type="cv_tracking.py" output="screen">
+        <param name="input_image_topic" type="string" value="/usb_cam/image_mono" />
         <param name="output_image_topic" type="string" value="/tracked_frame" />
-        <param name="tracker_type" type="string" value="MIL" />
+        <param name="tracker_type" type="string" value="CSRT" />
     </node>
 
 </launch>
