@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 
-import cv2
+
 import sys
+#FIXME cv2 importing from opencv3.4.3 path, ros-kinetic-opencv version 3.3.1 still installed
+sys.path.insert(1, "/usr/local/lib/python2.7/dist-packages")
+
+import cv2
 import rospy
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
+from arm_vs.msg import Rect
 from cv_bridge import CvBridge, CvBridgeError
 
 class Tracker:
@@ -16,9 +21,13 @@ class Tracker:
         self.output_image_topic = rospy.get_param("~output_image_topic", "/tracking_image")
         rospy.loginfo("Output Image Topic: %s", self.output_image_topic)
 
-        self.image_pub = rospy.Publisher(self.output_image_topic, Image, queue_size=10)
+        self.tracked_obj_pixels_topic = rospy.get_param("~tracked_obj_pixels_topic", "/tracked_obj_pixels")
+        rospy.loginfo("Tracked Object Pixels Topic: %s", self.tracked_obj_pixels_topic)
+
+        self.image_pub = rospy.Publisher(self.output_image_topic, Image, queue_size=1)
         self.image_sub = rospy.Subscriber(self.input_image_topic, Image, self.imageSubCallback)
         self.image_bridge = CvBridge()
+        self.tracked_obj_bbox_pub = rospy.Publisher(self.tracked_obj_pixels_topic, Rect, queue_size=10)
 
         self.image_tracker_type = rospy.get_param("~tracker_type", "CSRT")
         rospy.loginfo("Image Tracker Type: %s", self.image_tracker_type)
@@ -95,8 +104,23 @@ class Tracker:
             except CvBridgeError as e:
                 rospy.logerr(e)
 
+            tracked_pixel_bbox = Rect()
+            tracked_pixel_bbox.x = self.image_tracking_bbox[0]
+            tracked_pixel_bbox.y = self.image_tracking_bbox[1]
+            tracked_pixel_bbox.width = self.image_tracking_bbox[2]
+            tracked_pixel_bbox.height = self.image_tracking_bbox[3]
+            
+            try:
+                self.tracked_obj_bbox_pub.publish(tracked_pixel_bbox)
+            except CvBridgeError as e:
+                rospy.logerr(e)
+
 def main(args):
     rospy.init_node("image_tracker", anonymous=True)
+    
+    # d = rospy.Duration(2, 0)
+    # rospy.sleep(d)
+
     image_tracker = Tracker()
     
     try:
@@ -104,5 +128,5 @@ def main(args):
     except KeyboardInterrupt:
         rospy.loginfo("Shutting Down")
 
-if __name__ == '__main__' :
+if __name__ == '__main__':
     main(sys.argv)

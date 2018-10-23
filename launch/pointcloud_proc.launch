@@ -1,4 +1,7 @@
+<?xml version="1.0"?>
 <launch>
+    <arg name="point_cloud_input_topic" value="/camera/depth/points" />
+
     <!-- Nodelet manager for this pipeline -->
     <node pkg="nodelet" type="nodelet" args="manager" name="pcl_manager" output="screen"/>
 
@@ -12,7 +15,7 @@
 
     <!-- Pass through nodelet to keep point cloud in a range -->
     <node pkg="nodelet" type="nodelet" name="passthrough" args="load pcl/PassThrough pcl_manager" output="screen">
-        <remap from="~input" to="/camera/depth/points"/>
+        <remap from="~input" to="$(arg point_cloud_input_topic)"/>
         <rosparam>
             filter_fieldname: z
             filter_limit_min: 0.01

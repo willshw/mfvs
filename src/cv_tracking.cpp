@@ -10,9 +10,7 @@
 #include <opencv2/tracking.hpp>
 #include <opencv2/core/ocl.hpp>
 
-using namespace cv;
-
-class Tracker {
+class TrackerCV {
     private:
         ros::NodeHandle nh;
 
@@ -104,12 +102,12 @@ class Tracker {
         }
 
     public:
-        Tracker (ros::NodeHandle node_handle)
+        TrackerCV (ros::NodeHandle node_handle)
         :img_trans (nh){
             nh = node_handle;
-            Tracker::getParametersValues();
+            TrackerCV::getParametersValues();
 
-            img_sub = img_trans.subscribe(input_image_topic, 1, &Tracker::imageSubCallback, this);
+            img_sub = img_trans.subscribe(input_image_topic, 1, &TrackerCV::imageSubCallback, this);
             img_pub = img_trans.advertise(output_image_topic, 1);
 
             if (tracker_type == "BOOSTING")
@@ -124,8 +122,8 @@ class Tracker {
                 tracker = cv::TrackerMedianFlow::create();
             if (tracker_type == "MOSSE")
                 tracker = cv::TrackerMOSSE::create();
-            if (tracker_type == "CSRT")
-                tracker = TrackerCSRT::create();
+            // if (tracker_type == "CSRT")
+            //     tracker = TrackerCSRT::create();
 
             bbox = cv::Rect2d(0, 0, 1, 1);
             initialized = false;
@@ -135,7 +133,7 @@ class Tracker {
 int main (int argc, char** argv){
     ros::init (argc, argv, "obj_tracking");
     ros::NodeHandle nh ("~");
-    Tracker tracker (nh);
+    TrackerCV tracker (nh);
 
     ros::spin();
     return 0;

@@ -43,6 +43,7 @@ include_directories(
 add_message_files(
   FILES
   CartVelCmd.msg
+  Rect.msg
 )
 
 generate_messages(
@@ -75,7 +76,7 @@ add_dependencies(${PROJECT_NAME}_pbvs
 
 #visual tracking
 add_executable(${PROJECT_NAME}_visp_model_based_tracking
-  src/_visp_model_based_tracking.cpp
+  src/visp_model_based_tracking.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_visp_model_based_tracking

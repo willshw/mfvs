@@ -1,11 +1,14 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="track_cloud_filename" value="$(find arm_vs)/dataset/cropped_cloud/output1.pcd"/>
+    <include file="$(find arm_vs)/launch/pointcloud_proc.launch" />
 
-    <!-- <node pkg="rviz" type="rviz" name="rviz"/> -->
+    <arg name="track_cloud_filename" value="$(find arm_vs)/dataset/cal_mug/cal_mug_clean.pcd"/>
+
     <node pkg="arm_vs" type="arm_vs_pointcloud_tracking" name="pointcloud_tracking" output="screen">
-        <param name="input_pointcloud_topic" value="/kinect2/qhd/points" type="string"/>
+        <param name="input_pointcloud_topic" value="/voxel_grid/output" type="string"/>
         <param name="output_pointcloud_topic" value="matched_cloud" type="string"/>
         <param name="track_cloud_filename" value="$(arg track_cloud_filename)" type="string"/>
     </node>
+
+    <!-- <node pkg="rviz" type="rviz" name="rviz"/> -->
 </launch>
