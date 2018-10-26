@@ -14,7 +14,7 @@
     </node> -->
 
     <!-- Pass through nodelet to keep point cloud in a range -->
-    <node pkg="nodelet" type="nodelet" name="passthrough" args="load pcl/PassThrough pcl_manager" output="screen">
+    <!-- <node pkg="nodelet" type="nodelet" name="passthrough" args="load pcl/PassThrough pcl_manager" output="screen">
         <remap from="~input" to="$(arg point_cloud_input_topic)"/>
         <rosparam>
             filter_fieldname: z
@@ -22,11 +22,11 @@
             filter_limit_max: 1.5
             filter_limit_nefative: False
         </rosparam>
-    </node>
+    </node> -->
 
     <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
-    <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
-        <remap from="~input" to="/passthrough/output"/>
+    <!-- <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
+        <remap from="~input" to="$(arg point_cloud_input_topic)"/>
         <rosparam>
         filter_field_name: z
         filter_limit_min: 0.01
@@ -34,6 +34,21 @@
         filter_limit_negative: False
         leaf_size: 0.01
         </rosparam>
+    </node> -->
+
+    <!-- crop box filtering.... This throws out data that is far away from the
+       table where we are trying to extract data. These values were tuned for
+       the PCD file included using rqt_reconfigure.-->
+    <node pkg="nodelet" type="nodelet" name="cropbox" args="load pcl/CropBox /pcl_manager" output="screen">
+    <remap from="~input" to="/camera/depth/points" />
+    <rosparam>
+        min_x: -0.75
+        max_x: 0.5
+        min_y: -0.6
+        max_y: 0.1
+        min_z: 0.0
+        max_z: 1.5
+    </rosparam>
     </node>
 
     <include file="$(find openni2_launch)/launch/openni2.launch"/>

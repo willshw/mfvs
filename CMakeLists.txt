@@ -22,6 +22,8 @@ find_package(
   cv_bridge
   image_transport
   pcl_ros
+
+  message_filters
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
@@ -54,7 +56,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include ${OpenCV_INCLUDE_DIRS}
   LIBRARIES arm-vs ${OpenCV_LIBRARIES}
-  CATKIN_DEPENDS roscpp std_msgs geometry_msgs pcl_ros
+  CATKIN_DEPENDS roscpp std_msgs geometry_msgs pcl_ros message_filters
   DEPENDS OpenCV Eigen3 PCL VISP Boost
 )
 
@@ -118,5 +120,19 @@ target_link_libraries(${PROJECT_NAME}_cv_tracking
 )
 
 add_dependencies(${PROJECT_NAME}_cv_tracking
+  ${catkin_EXPORTED_TARGETS}
+)
+
+# crop cloud
+add_executable(${PROJECT_NAME}_crop_cloud
+  src/crop_cloud.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}_crop_cloud
+  ${roscpp_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+add_dependencies(${PROJECT_NAME}_crop_cloud
   ${catkin_EXPORTED_TARGETS}
 )

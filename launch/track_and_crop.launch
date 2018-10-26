@@ -12,4 +12,10 @@
     <include file="$(find arm_vs)/launch/2d_tracking.launch" />
 
 
+    <!-- <node name="crop_cloud" pkg="arm_vs" type="crop_cloud" output="screen">
+        <param name="input_pixel_points_topic" type="string" value="/tracked_obj_pixels" />
+        <param name="input_pointcloud_topic" type="string" value="/camera/depth_registered/points" />
+        <param name="output_pointcloud_topic" type="string" value="/tracked_obj_cropped_cloud" />
+    </node> -->
+
 </launch>

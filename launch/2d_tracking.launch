@@ -1,16 +1,17 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="camera_ns" value="/camera/rgb" />
-    <arg name="tracking_image_source" value="$(arg camera_ns)/image_mono" />
+    <arg name="camera_ns" value="/camera" />
+    <arg name="tracking_image_source" value="$(arg camera_ns)/rgb/image_raw" />
+    <arg name="pointcloud_source" value="$(arg camera_ns)/depth/points" />
 
     <node name="image_view" pkg="rqt_image_view" type="rqt_image_view" respawn="false" output="screen" />
 
-    <node name="image_proc" pkg="image_proc" type="image_proc" ns="$(arg camera_ns)"/>
+    <!-- <node name="image_proc" pkg="image_proc" type="image_proc" ns="$(arg camera_ns)"/> -->
 
     <node name="visual_tracking" pkg="arm_vs" type="cv_tracking.py" output="screen">
+        <param name="input_pointcloud_topic" type="string" value="$(arg pointcloud_source)" />
         <param name="input_image_topic" type="string" value="$(arg tracking_image_source)" />
         <param name="output_image_topic" type="string" value="/tracked_frame" />
-        <param name="tracked_obj_pixels_topic" type="string" value="/tracked_obj_pixels" />
         <param name="tracker_type" type="string" value="CSRT" />
     </node>
 
