@@ -22,6 +22,8 @@ find_package(
   cv_bridge
   image_transport
   pcl_ros
+  pcl_conversions
+  pcl_msgs
 
   message_filters
 )
@@ -56,7 +58,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include ${OpenCV_INCLUDE_DIRS}
   LIBRARIES arm-vs ${OpenCV_LIBRARIES}
-  CATKIN_DEPENDS roscpp std_msgs geometry_msgs pcl_ros message_filters
+  CATKIN_DEPENDS roscpp std_msgs geometry_msgs pcl_ros message_filters pcl_msgs pcl_conversions
   DEPENDS OpenCV Eigen3 PCL VISP Boost
 )
 
@@ -77,62 +79,63 @@ add_dependencies(${PROJECT_NAME}_pbvs
 )
 
 #visual tracking
-add_executable(${PROJECT_NAME}_visp_model_based_tracking
-  src/visp_model_based_tracking.cpp
-)
+# add_executable(${PROJECT_NAME}_visp_model_based_tracking
+#   src/visp_model_based_tracking.cpp
+# )
 
-target_link_libraries(${PROJECT_NAME}_visp_model_based_tracking
-  ${catkin_LIBRARIES}
-  ${roscpp_LIBRARIES}
-  ${OpenCV_LIBRARIES}
-  ${VISP_LIBRARIES}
-)
+# target_link_libraries(${PROJECT_NAME}_visp_model_based_tracking
+#   ${catkin_LIBRARIES}
+#   ${roscpp_LIBRARIES}
+#   ${OpenCV_LIBRARIES}
+#   ${VISP_LIBRARIES}
+# )
 
-add_dependencies(${PROJECT_NAME}_visp_model_based_tracking
-  ${catkin_EXPORTED_TARGETS}
-)
+# add_dependencies(${PROJECT_NAME}_visp_model_based_tracking
+#   ${catkin_EXPORTED_TARGETS}
+# )
 
 #point cloud tracking
-add_executable(${PROJECT_NAME}_pointcloud_tracking
-  src/pointcloud_tracking.cpp
-)
+# add_executable(${PROJECT_NAME}_pointcloud_tracking
+#   src/pointcloud_tracking.cpp
+# )
 
-target_link_libraries(${PROJECT_NAME}_pointcloud_tracking
-  ${catkin_LIBRARIES}
-  ${roscpp_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${PCL_LIBRARIES}
-)
+# target_link_libraries(${PROJECT_NAME}_pointcloud_tracking
+#   ${catkin_LIBRARIES}
+#   ${roscpp_LIBRARIES}
+#   ${Boost_LIBRARIES}
+#   ${PCL_LIBRARIES}
+# )
 
-add_dependencies(${PROJECT_NAME}_pointcloud_tracking
-  ${catkin_EXPORTED_TARGETS}
-)
+# add_dependencies(${PROJECT_NAME}_pointcloud_tracking
+#   ${catkin_EXPORTED_TARGETS}
+# )
 
 #visual tracking
-add_executable(${PROJECT_NAME}_cv_tracking
-  src/cv_tracking.cpp
+# add_executable(${PROJECT_NAME}_cv_tracking
+#   src/cv_tracking.cpp
+# )
+
+# target_link_libraries(${PROJECT_NAME}_cv_tracking
+#   ${catkin_LIBRARIES}
+#   ${roscpp_LIBRARIES}
+#   ${OpenCV_LIBRARIES}
+# )
+
+# add_dependencies(${PROJECT_NAME}_cv_tracking
+#   ${catkin_EXPORTED_TARGETS}
+# )
+
+add_executable(${PROJECT_NAME}_extract_obj_pointcloud
+  src/extract_obj_pointcloud.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_cv_tracking
+target_link_libraries(${PROJECT_NAME}_extract_obj_pointcloud
   ${catkin_LIBRARIES}
   ${roscpp_LIBRARIES}
-  ${OpenCV_LIBRARIES}
-)
-
-add_dependencies(${PROJECT_NAME}_cv_tracking
-  ${catkin_EXPORTED_TARGETS}
-)
-
-# crop cloud
-add_executable(${PROJECT_NAME}_crop_cloud
-  src/crop_cloud.cpp
-)
-
-target_link_libraries(${PROJECT_NAME}_crop_cloud
-  ${roscpp_LIBRARIES}
+  ${PCL_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
-add_dependencies(${PROJECT_NAME}_crop_cloud
+add_dependencies(${PROJECT_NAME}_extract_obj_pointcloud
   ${catkin_EXPORTED_TARGETS}
 )

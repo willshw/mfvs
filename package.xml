@@ -61,6 +61,8 @@
   <build_depend>image_transport</build_depend>
   <build_depend>opencv2</build_depend>
   <build_depend>pcl_ros</build_depend>
+  <build_depend>pcl_conversions</build_depend>
+  <build_depend>pcl_msgs</build_depend>
   <build_depend>message_filters</build_depend>
 
 
@@ -75,6 +77,8 @@
   <build_export_depend>image_transport</build_export_depend>
   <build_export_depend>opencv2</build_export_depend>
   <build_export_depend>pcl_ros</build_export_depend>
+  <build_export_depend>pcl_conversions</build_export_depend>
+  <build_export_depend>pcl_msgs</build_export_depend>
   <build_export_depend>message_filters</build_export_depend>
 
   <exec_depend>roscpp</exec_depend>
@@ -88,6 +92,8 @@
   <exec_depend>image_transport</exec_depend>
   <exec_depend>opencv2</exec_depend>
   <exec_depend>pcl_ros</exec_depend>
+  <exec_depend>pcl_conversions</exec_depend>
+  <exec_depend>pcl_msgs</exec_depend>
   <exec_depend>message_filters</exec_depend>
 
 </package>

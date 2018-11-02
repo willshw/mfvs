@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="camera_ns" value="/camera" />
+    <arg name="input_pointcloud" value="$(arg camera_ns)/depth/points" />
+    <arg name="tracking_image_source" value="$(arg camera_ns)/rgb/image_raw" />
+    <arg name="tracking_image" value="/tracking_image" />
+    <arg name="tracking_point_indices" value="/tracking_indices" />
+    <arg name="tracking_pointcloud" value="/tracking_pointcloud" />
+
+    <!-- Nodelet manager for this pipeline -->
+    <node pkg="nodelet" type="nodelet" args="manager" name="pcl_manager" output="screen"/>
+
+    <!-- Pass through nodelet to keep point cloud in a range -->
+    <node pkg="nodelet" type="nodelet" name="passthrough" args="load pcl/PassThrough pcl_manager" output="screen">
+        <remap from="~input" to="$(arg tracking_pointcloud)" />
+        <rosparam>
+            filter_fieldname: z
+            filter_limit_min: 0.01
+            filter_limit_max: 1.5
+            filter_limit_nefative: False
+        </rosparam>
+    </node>
+
+    <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+    <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
+        <remap from="~input" to="/passthrough/output" />
+        <rosparam>
+            filter_field_name: z
+            filter_limit_min: 0.01
+            filter_limit_max: 1.5
+            filter_limit_negative: False
+            leaf_size: 0.01
+        </rosparam>
+    </node>
+
+    <include file="$(find openni2_launch)/launch/openni2.launch" />
+
+    <node name="track_object" pkg="arm_vs" type="track_obj.py" output="screen">
+        <param name="input_pointcloud_topic" type="string" value="$(arg input_pointcloud)" />
+        <param name="input_image_topic" type="string" value="$(arg tracking_image_source)" />
+        <param name="output_image_topic" type="string" value="$(arg tracking_image)" />
+        <param name="output_indices_topic" type="string" value="$(arg tracking_point_indices)" />
+        <param name="tracker_type" type="string" value="CSRT" />
+    </node>
+
+    <node name="extract_object_pointcloud" pkg="arm_vs" type="arm_vs_extract_obj_pointcloud" output="screen">
+        <param name="input_pointcloud_topic" type="string" value="$(arg input_pointcloud)" />
+        <param name="input_indices_topic" type="string" value="$(arg tracking_point_indices)" />
+        <param name="output_pointcloud_topic" type="string" value="$(arg tracking_pointcloud)" />
+    </node>
+
+    <node name="rviz" pkg="rviz" type="rviz" output="screen"/>
+
+</launch>
