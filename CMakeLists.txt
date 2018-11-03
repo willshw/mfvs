@@ -78,21 +78,53 @@ add_dependencies(${PROJECT_NAME}_pbvs
   arm_vs_generate_messages_cpp
 )
 
-#visual tracking
-# add_executable(${PROJECT_NAME}_visp_model_based_tracking
-#   src/visp_model_based_tracking.cpp
-# )
+# node for extracing pointcloud according to 2d tracking obj
+add_executable(${PROJECT_NAME}_extract_obj_pointcloud
+  src/extract_obj_pointcloud.cpp
+)
 
-# target_link_libraries(${PROJECT_NAME}_visp_model_based_tracking
-#   ${catkin_LIBRARIES}
-#   ${roscpp_LIBRARIES}
-#   ${OpenCV_LIBRARIES}
-#   ${VISP_LIBRARIES}
-# )
+target_link_libraries(${PROJECT_NAME}_extract_obj_pointcloud
+  ${catkin_LIBRARIES}
+  ${roscpp_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
 
-# add_dependencies(${PROJECT_NAME}_visp_model_based_tracking
-#   ${catkin_EXPORTED_TARGETS}
-# )
+add_dependencies(${PROJECT_NAME}_extract_obj_pointcloud
+  ${catkin_EXPORTED_TARGETS}
+)
+
+# tracking pointcloud using template
+add_executable(${PROJECT_NAME}_track_obj_pointcloud
+  src/track_obj_pointcloud.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}_track_obj_pointcloud
+  ${catkin_LIBRARIES}
+  ${roscpp_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${PCL_LIBRARIES}
+)
+
+add_dependencies(${PROJECT_NAME}_track_obj_pointcloud
+  ${catkin_EXPORTED_TARGETS}
+)
+
+# align pointcloud using template
+add_executable(${PROJECT_NAME}_align_obj_pointcloud
+  src/align_obj_pointcloud.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}_align_obj_pointcloud
+  ${catkin_LIBRARIES}
+  ${roscpp_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${PCL_LIBRARIES}
+)
+
+add_dependencies(${PROJECT_NAME}_align_obj_pointcloud
+  ${catkin_EXPORTED_TARGETS}
+)
 
 #point cloud tracking
 # add_executable(${PROJECT_NAME}_pointcloud_tracking
@@ -125,17 +157,3 @@ add_dependencies(${PROJECT_NAME}_pbvs
 #   ${catkin_EXPORTED_TARGETS}
 # )
 
-add_executable(${PROJECT_NAME}_extract_obj_pointcloud
-  src/extract_obj_pointcloud.cpp
-)
-
-target_link_libraries(${PROJECT_NAME}_extract_obj_pointcloud
-  ${catkin_LIBRARIES}
-  ${roscpp_LIBRARIES}
-  ${PCL_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
-
-add_dependencies(${PROJECT_NAME}_extract_obj_pointcloud
-  ${catkin_EXPORTED_TARGETS}
-)

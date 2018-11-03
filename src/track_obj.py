@@ -39,7 +39,7 @@ class Tracker:
         rospy.loginfo("Image Tracker Type: %s", self.image_tracker_type)
 
         self.ROI_initialized = False
-        self.image_tracking_bbox = (287, 23, 86, 320)
+        self.image_tracking_bbox = (0, 0, 639, 479)
 
         if self.image_tracker_type == 'BOOSTING':
             self.tracker = cv2.TrackerBoosting_create()

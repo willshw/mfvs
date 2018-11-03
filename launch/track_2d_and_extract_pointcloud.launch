@@ -5,7 +5,7 @@
     <arg name="tracking_image_source" value="$(arg camera_ns)/rgb/image_raw" />
     <arg name="tracking_image" value="/tracking_image" />
     <arg name="tracking_point_indices" value="/tracking_indices" />
-    <arg name="tracking_pointcloud" value="/tracking_pointcloud" />
+    <arg name="tracking_pointcloud" value="/extracted_pointcloud" />
 
     <!-- Nodelet manager for this pipeline -->
     <node pkg="nodelet" type="nodelet" args="manager" name="pcl_manager" output="screen"/>

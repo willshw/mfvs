@@ -59,8 +59,8 @@ class Extraction{
 
         Extraction::getParametersValues();
 
-        ind_sub.subscribe(nh, input_indices_topic, 1);
-        pt_sub.subscribe(nh, input_pointcloud_topic, 1);
+        ind_sub.subscribe(nh, input_indices_topic, 10);
+        pt_sub.subscribe(nh, input_pointcloud_topic, 10);
 
         extracted_pt_pub = nh.advertise<PointCloud>(output_pointcloud_topic, 1);
 
