@@ -4,9 +4,12 @@
     <arg name="input_scene_pointcloud" value="/voxel_grid/output" />
     <arg name="output_pointcloud" value="/aligned_pointcloud" />
 
+    <arg name="icp_alignment_frame" value="icp_alignment_frame" />
+
     <node pkg="arm_vs" type="arm_vs_align_obj_pointcloud" name="pointcloud_alignment" output="screen">
-        <param name="input_template_pointcloud_topic" type="string" value="$(arg input_template_pointcloud)" />
-        <param name="input_scene_pointcloud_topic" type="string" value="$(arg input_scene_pointcloud)" />
+        <param name="input_template_pointcloud_topic" type="string" value="$(arg tracked_pointcloud)" />
+        <param name="input_scene_pointcloud_topic" type="string" value="$(arg input_pointcloud)" />
         <param name="output_pointcloud_topic" type="string" value="$(arg output_pointcloud)" />
+        <param name="icp_alignment_frame" type="string" value="$(arg icp_alignment_frame)" />
     </node>
 </launch>

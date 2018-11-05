@@ -1,5 +1,7 @@
 #include <ros/ros.h>
 #include <pcl_ros/point_cloud.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_eigen/tf2_eigen.h>
 
 #include <vector>
 #include <Eigen/Core>
@@ -38,22 +40,23 @@ typedef message_filters::Synchronizer<MySyncPolicy> Sync;
 class Alignment{
     private:
     ros::NodeHandle nh;
-
     message_filters::Subscriber<PointCloud> template_cloud_sub;
     message_filters::Subscriber<PointCloud> scene_cloud_sub;
-    
     ros::Publisher algined_cloud_pub;
-
     boost::shared_ptr<Sync> sync;
 
+    // parameters
     std::string input_template_pointcloud_topic;
     std::string input_scene_pointcloud_topic;
     std::string output_pointcloud_topic;
+    std::string child_frame_id;
 
     pcl::NormalEstimation<pcl::PointXYZ, pcl::PointNormal> normal_est;
     FeatureEstimation feature_est;
     pcl::SampleConsensusPrerejective<pcl::PointXYZ, pcl::PointXYZ, pcl::FPFHSignature33> align;
     // pcl::SampleConsensusInitialAlignment<pcl::PointXYZ, pcl::PointXYZ, pcl::FPFHSignature33> align;
+
+    pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
 
     const float leaf = 0.005f;
 
@@ -61,9 +64,46 @@ class Alignment{
         nh.param<std::string>("input_template_pointcloud_topic", input_template_pointcloud_topic, "/camera/depth/points");
         nh.param<std::string>("input_scene_pointcloud_topic", input_scene_pointcloud_topic, "/tracked_object_points_indices");
         nh.param<std::string>("output_pointcloud_topic", output_pointcloud_topic, "/tracked_object_pointcloud");
+        nh.param<std::string>("icp_alignment_frame", child_frame_id, "icp_alignment_frame");
     }
 
-    void callback(const PointCloud::ConstPtr& template_cloud, const PointCloud::ConstPtr& scene_cloud){
+    void callback_icp(const PointCloud::ConstPtr& template_cloud, const PointCloud::ConstPtr& scene_cloud){
+        icp.setInputSource(template_cloud);
+        icp.setInputTarget(scene_cloud);
+
+        PointCloud::Ptr object_aligned (new PointCloud);
+
+        pcl::ScopeTime t("Alignment");
+        icp.align(*object_aligned);
+
+        ROS_INFO("Alignment Fitness Score: %f",(float) icp.getFitnessScore());
+
+        if(icp.hasConverged()){
+            ROS_INFO("Alignment converged");
+
+            // get the final transformation
+            Eigen::Affine3f transformation_eigen;
+            transformation_eigen.matrix() = icp.getFinalTransformation(); // icp.getFinalTransformation() returns Eigen::Matrix4f
+
+            // Broadcast TF of the pointcloud template
+            geometry_msgs::TransformStamped transformation_stamped;
+
+            transformation_stamped = tf2::eigenToTransform(transformation_eigen.cast<double>());
+            // transformation_stamped.header = msg_cloud->header;
+            transformation_stamped.header.frame_id = scene_cloud->header.frame_id;
+            transformation_stamped.child_frame_id = child_frame_id;
+
+            static tf2_ros::TransformBroadcaster br;
+            br.sendTransform(transformation_stamped);
+
+            algined_cloud_pub.publish(*object_aligned);
+
+        }else{
+            ROS_INFO("Alignment failed to converge");
+        } 
+    }
+
+    void callback_FPFH(const PointCloud::ConstPtr& template_cloud, const PointCloud::ConstPtr& scene_cloud){
         PointCloud_Normal::Ptr scene (new PointCloud_Normal);
         PointCloud_Normal::Ptr object (new PointCloud_Normal);
 
@@ -133,7 +173,7 @@ class Alignment{
         scene_cloud_sub.subscribe(nh, input_scene_pointcloud_topic, 10);
 
         sync.reset(new Sync(MySyncPolicy(10), template_cloud_sub, scene_cloud_sub));
-        sync->registerCallback(boost::bind(&Alignment::callback, this, _1, _2));
+        sync->registerCallback(boost::bind(&Alignment::callback_icp, this, _1, _2));
     
         algined_cloud_pub = nh.advertise<PointCloud>(output_pointcloud_topic, 1);
 

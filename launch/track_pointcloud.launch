@@ -1,12 +1,16 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="template_pointcloud_filename" value="$(find arm_vs)/dataset/cal_mug/cal_mug_clean.pcd"/>
+    <arg name="template_pointcloud_filename" value="$(find arm_vs)/dataset/flat_block/flat_block_clean.pcd"/>
     <arg name="input_pointcloud" value="/voxel_grid/output" />
     <arg name="output_pointcloud" value="/tracked_pointcloud" />
+    <arg name="tracked_template_frame" value="particle_filter_tracked_template_frame" />
+    <arg name="tracker_reset_service" value="reset_particle_filter_tracker" />
 
     <node pkg="arm_vs" type="arm_vs_track_obj_pointcloud" name="pointcloud_tracking" output="screen">
         <param name="input_pointcloud_topic" type="string" value="$(arg input_pointcloud)" />
         <param name="output_pointcloud_topic" type="string" value="$(arg output_pointcloud)" />
         <param name="template_cloud_filename" type="string" value="$(arg template_pointcloud_filename)" />
+        <param name="particle_filter_tracked_template_frame" type="string" value="$(arg tracked_template_frame)" />
+        <param name="particle_filter_tracker_reset_service" type="string" value="$(arg tracker_reset_service)" />
     </node>
 </launch>

@@ -15,6 +15,8 @@ find_package(
   geometry_msgs
   sensor_msgs
 
+  std_srvs
+
   tf2
   tf2_ros
   tf2_eigen
