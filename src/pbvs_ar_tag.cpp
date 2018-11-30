@@ -65,13 +65,8 @@ class VisualServoing{
         
         void getParametersValues(){
             nh.param<double>("pbvs_control_loop_hz", pbvs_control_loop_hz, 50.0);
-            ROS_INFO("PBVS Control Loop Frequency: %f", pbvs_control_loop_hz);
-
             nh.param<double>("pbvs_control_gain_lambda", pbvs_control_law_gain_lambda, 1.0);
-            ROS_INFO("PBVS Control Law Gain(Lambda): %f", pbvs_control_law_gain_lambda);
-
             nh.param<double>("pbvs_control_deadband_error", pbvs_control_deadband_error, 0.0001);
-            ROS_INFO("PBVS Control Deadband Error: %f", pbvs_control_deadband_error);
 
             if(!nh.hasParam("desired_camera_frame") || !nh.hasParam("current_camera_frame")){
                 ROS_FATAL("Camera frame parameters are not correctly set!");
@@ -79,7 +74,6 @@ class VisualServoing{
             else{
                 nh.param<std::string>("desired_camera_frame", desired_camera_frame, "/desired_cam_frame");
                 nh.param<std::string>("current_camera_frame", current_camera_frame, "/camera_rgb_optical_frame");
-                ROS_INFO("\nDesired camera frame: %s \nCurrent camera frame: %s", desired_camera_frame.c_str(), current_camera_frame.c_str());
             }
 
             if(!nh.hasParam("robot_body_frame")){
@@ -87,7 +81,6 @@ class VisualServoing{
             }
             else{
                 nh.param<std::string>("robot_body_frame", robot_body_frame, "/robot_body_frame");
-                ROS_INFO("Robot body frame: %s", robot_body_frame.c_str());
             }
 
             if(!nh.hasParam("control_input_topic")){
@@ -95,11 +88,9 @@ class VisualServoing{
             }
             else{
                 nh.param<std::string>("control_input_topic", control_input_topic, "/control_input");
-                ROS_INFO("Control input topic: %s", control_input_topic.c_str());
             }
 
             nh.param<double>("control_input_topic_hz", control_input_topic_hz, 50.0);
-            ROS_INFO("Control input topic frequenct: %f", control_input_topic_hz);
         }
 
         void getTwistVectorBodyFrame(Eigen::VectorXd& Vb, Eigen::VectorXd Vc, Eigen::Matrix4d bMc){
@@ -129,8 +120,31 @@ class VisualServoing{
             // ROS_INFO("\n%s", ss.str().c_str());
         }
 
+        // void ibvs(){
+        //     vpHomogeneousMatrix cdMo(0.0, 0.0, 0.5, 0.0, 0.0, 0.0); // cdMo is the result of a pose estimation; cd: desired camera frame, o:object frame
+
+        //     vpPoints point[1];
+        //     point[0].setWorldCoordinates(0.0, 0.0, 0.0);
+
+        //     vpServo task;
+        //     task.setServo(vpServo::EYEINHAND_CAMERA);
+        //     task.setInteractionMatrixType(vpServo::CURRENT);
+        //     task.setLambda(0.5);
+
+        //     vpFeaturePoint p[1], pd[1];
+        //     point[0].track(cdMo);
+        //     vpFeatureBuilder::create(pd[0], point[0]);
+        //     point[0].track(cMo);
+        //     vpFeatureBuilder::create(p[0], point[0]);
+
+        //     task.addFeature(p[0], pd[0]);
+            
+        //     vpHomogeneousMatrix wMc, wMo;
+
+        // }
+
         void pbvs(){
-            vpHomogeneousMatrix cdMc; // ... cdMc is here the result of a pose estimation
+            vpHomogeneousMatrix cdMc; // cdMc is the result of a pose estimation; cd: desired camera frame, c:current camera frame
 
             // Creation of the current visual feature s = (c*_t_c, ThetaU)
             vpFeatureTranslation s_t(vpFeatureTranslation::cdMc);

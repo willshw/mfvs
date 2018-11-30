@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="template_pointcloud_filename" value="$(find arm_vs)/dataset/flat_block/flat_block_clean.pcd"/>
+    <arg name="template_pointcloud_filename" value="$(find arm_vs)/dataset/mustard/mustard.pcd"/>
     <arg name="input_pointcloud" value="/voxel_grid/output" />
     <arg name="tracked_pointcloud" value="/tracked_pointcloud" />
     <arg name="output_pointcloud" value="/aligned_pointcloud" />
