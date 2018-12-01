@@ -5,6 +5,7 @@
 
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/conversions.h>
 
 #include <pcl/common/time.h>
 #include <pcl/common/centroid.h>
@@ -32,7 +33,15 @@
 // srv
 #include <std_srvs/Trigger.h>
 
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+typedef pcl::PointXYZRGB RefPointType;
+
+typedef pcl::tracking::ParticleXYZRPY ParticleT;
+typedef pcl::PointCloud<RefPointType> Cloud;
+
+typedef Cloud::Ptr CloudPtr;
+typedef Cloud::ConstPtr CloudConstPtr;
+
+typedef pcl::tracking::ParticleFilterTracker<RefPointType, ParticleT> ParticleFilter;
 
 class PointcloudTracking{
     private:
@@ -49,8 +58,8 @@ class PointcloudTracking{
     std::string tracker_reset_service;
 
     // PCL stuff
-    PointCloud::Ptr template_cloud;
-    boost::shared_ptr<pcl::tracking::ParticleFilterTracker<pcl::PointXYZ, pcl::tracking::ParticleXYZRPY>> tracker_;
+    CloudPtr template_cloud;
+    boost::shared_ptr<ParticleFilter> tracker_;
     int counter;
 
     void getParametersValues(){
@@ -61,7 +70,7 @@ class PointcloudTracking{
         nh.param<std::string>("particle_filter_tracker_reset_service", tracker_reset_service, "reset_particle_filter_tracker");
     }
 
-    bool reset_tracker_callback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res){
+    bool reset_tracker_srv_callback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res){
 
         tracker_->resetTracking();
         
@@ -73,7 +82,7 @@ class PointcloudTracking{
         return true;
     }
 
-    void pointcloud_sub_callback(const PointCloud::ConstPtr& msg_cloud){
+    void pointcloud_sub_callback(const CloudConstPtr& msg_cloud){
         // ROS_INFO("Cloud: width = %d, height = %d\n", msg_cloud->width, msg_cloud->height);
 
         if(counter < 10){
@@ -84,12 +93,12 @@ class PointcloudTracking{
             tracker_->setInputCloud (msg_cloud);
             tracker_->compute ();
 
-            pcl::tracking::ParticleXYZRPY result = tracker_->getResult ();
+            ParticleT result = tracker_->getResult ();
             Eigen::Affine3f transformation_eigen = tracker_->toEigenMatrix (result);
 
             // Get object template pointcloud pose from tracker
-            PointCloud::Ptr result_cloud (new PointCloud());
-            pcl::transformPointCloud<pcl::PointXYZ> (*(tracker_->getReferenceCloud ()), *result_cloud, transformation_eigen);
+            CloudPtr result_cloud (new Cloud());
+            pcl::transformPointCloud<RefPointType> (*(tracker_->getReferenceCloud ()), *result_cloud, transformation_eigen);
 
             // Broadcast TF of the pointcloud template
             geometry_msgs::TransformStamped transformation_stamped;
@@ -115,7 +124,7 @@ class PointcloudTracking{
 
         PointcloudTracking::getParametersValues();
 
-        template_cloud.reset(new PointCloud());
+        template_cloud.reset(new Cloud());
         if(pcl::io::loadPCDFile(template_cloud_filename, *template_cloud) == -1){
             ROS_FATAL("Target cloud pcd file not found!");
         }
@@ -134,10 +143,10 @@ class PointcloudTracking{
         std::vector<double> initial_noise_covariance = std::vector<double> (6, 0.00001);
         std::vector<double> default_initial_mean = std::vector<double> (6, 0.0);
 
-        boost::shared_ptr<pcl::tracking::KLDAdaptiveParticleFilterOMPTracker<pcl::PointXYZ, pcl::tracking::ParticleXYZRPY>> tracker
-            (new pcl::tracking::KLDAdaptiveParticleFilterOMPTracker<pcl::PointXYZ, pcl::tracking::ParticleXYZRPY> (8)); // 8 is the number of threads
+        boost::shared_ptr<pcl::tracking::KLDAdaptiveParticleFilterOMPTracker<RefPointType, ParticleT>> tracker
+            (new pcl::tracking::KLDAdaptiveParticleFilterOMPTracker<RefPointType, ParticleT> (8)); // 8 is the number of threads
 
-        pcl::tracking::ParticleXYZRPY bin_size;
+        ParticleT bin_size;
         bin_size.x = 0.1f;
         bin_size.y = 0.1f;
         bin_size.z = 0.1f;
@@ -163,14 +172,23 @@ class PointcloudTracking{
         tracker_->setUseNormal (false);
 
         //Setup coherence object for tracking
-        pcl::tracking::ApproxNearestPairPointCloudCoherence<pcl::PointXYZ>::Ptr coherence = pcl::tracking::ApproxNearestPairPointCloudCoherence<pcl::PointXYZ>::Ptr
-            (new pcl::tracking::ApproxNearestPairPointCloudCoherence<pcl::PointXYZ> ());
+        
+        pcl::tracking::ApproxNearestPairPointCloudCoherence<RefPointType>::Ptr coherence = pcl::tracking::ApproxNearestPairPointCloudCoherence<RefPointType>::Ptr
+            (new pcl::tracking::ApproxNearestPairPointCloudCoherence<RefPointType> ());
 
-        boost::shared_ptr<pcl::tracking::DistanceCoherence <pcl::PointXYZ> > distance_coherence
-            = boost::shared_ptr<pcl::tracking::DistanceCoherence<pcl::PointXYZ> > (new pcl::tracking::DistanceCoherence<pcl::PointXYZ> ());
+        //Distance Coherence
+        boost::shared_ptr<pcl::tracking::DistanceCoherence <RefPointType> > distance_coherence
+            = boost::shared_ptr<pcl::tracking::DistanceCoherence<RefPointType> > (new pcl::tracking::DistanceCoherence<RefPointType> ());
+        
+        //Color Coherence
+        boost::shared_ptr<pcl::tracking::HSVColorCoherence <RefPointType> > hsv_color_coherence
+            = boost::shared_ptr<pcl::tracking::HSVColorCoherence<RefPointType> > (new pcl::tracking::HSVColorCoherence<RefPointType> ());
+
+        //Add coherence
         coherence->addPointCoherence (distance_coherence);
+        coherence->addPointCoherence (hsv_color_coherence);
 
-        boost::shared_ptr<pcl::search::Octree<pcl::PointXYZ> > search (new pcl::search::Octree<pcl::PointXYZ> (0.01));
+        boost::shared_ptr<pcl::search::Octree<RefPointType> > search (new pcl::search::Octree<RefPointType> (0.01));
         coherence->setSearchMethod (search);
         coherence->setMaximumDistance (0.01);
 
@@ -179,21 +197,21 @@ class PointcloudTracking{
         //prepare the model of tracker's target
         Eigen::Vector4f c;
         Eigen::Affine3f trans = Eigen::Affine3f::Identity ();
-        PointCloud::Ptr transed_ref (new PointCloud);
+        CloudPtr transed_ref (new Cloud);
 
-        pcl::compute3DCentroid<pcl::PointXYZ> (*template_cloud, c);
+        pcl::compute3DCentroid<RefPointType> (*template_cloud, c);
         trans.translation ().matrix () = Eigen::Vector3f (c[0], c[1], c[2]);
-        pcl::transformPointCloud<pcl::PointXYZ> (*template_cloud, *transed_ref, trans.inverse());
+        pcl::transformPointCloud<RefPointType> (*template_cloud, *transed_ref, trans.inverse());
 
         //set reference model and trans
         tracker_->setReferenceCloud (transed_ref);
         tracker_->setTrans (trans);
 
         // initialize subscribers, publishers and services
-        sub = nh.subscribe<PointCloud>(input_pointcloud_topic, 1, &PointcloudTracking::pointcloud_sub_callback, this);
-        pub = nh.advertise<PointCloud>(output_pointcloud_topic, 1);
+        sub = nh.subscribe<Cloud>(input_pointcloud_topic, 1, &PointcloudTracking::pointcloud_sub_callback, this);
+        pub = nh.advertise<Cloud>(output_pointcloud_topic, 1);
 
-        reset_service = nh.advertiseService(tracker_reset_service, &PointcloudTracking::reset_tracker_callback, this);
+        reset_service = nh.advertiseService(tracker_reset_service, &PointcloudTracking::reset_tracker_srv_callback, this);
     }
 };
 

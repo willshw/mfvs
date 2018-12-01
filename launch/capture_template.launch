@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="manager"                         default="pcl_manager" />
+    <arg name="ns"                              default="" />
+
+    <!-- Estimate point normals -->
+    <node pkg="nodelet" type="nodelet" name="normal_estimation" args="load pcl/NormalEstimation $(arg manager)" output="screen">
+        <remap from="~input" to="$(arg ns)/voxel_grid/output" />
+        <rosparam>
+            k_search: 0
+            radius_search: 0.015
+            spatial_locator: 0
+        </rosparam>
+    </node>
+
+    <!-- Segment the table plane -->
+    <node pkg="nodelet" type="nodelet" name="planar_segmentation" args="load pcl/SACSegmentationFromNormals $(arg manager)" output="screen">
+        <remap from="~input"   to="$(arg ns)/voxel_grid/output" />
+        <remap from="~normals" to="$(arg ns)/normal_estimation/output" />
+        <rosparam>
+            model_type: 11
+            distance_threshold: 0.05
+            max_iterations: 500
+            method_type: 0
+            optimize_coefficients: true
+            normal_distance_weight: 0.1
+            eps_angle: 0.09
+        </rosparam>
+    </node>
+
+    <node pkg="nodelet" type="nodelet" name="extract_plane_indices" args="load pcl/ExtractIndices $(arg manager)" output="screen">
+        <remap from="~input"   to="$(arg ns)/voxel_grid/output" />
+        <remap from="~indices" to="$(arg ns)/planar_segmentation/inliers" />
+        <rosparam>
+            negative: true
+        </rosparam>
+    </node>
+
+</launch>

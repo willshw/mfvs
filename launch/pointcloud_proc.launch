@@ -1,50 +1,66 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="pointcloud_input_topic" default="/camera/depth/color/points" />
-    <arg name="openni_device" default="true" />
-    <arg name="filter_axis" default="z" />
+    <arg name="manager"                 default="realsense2_camera_manager"/>
+    <arg name="capture_template"        default="false" />
+    <arg name="serial_no"               default=""/>
+    <arg name="json_file_path"          default=""/>
+    <arg name="camera"                  default="realsense" />
+    <arg name="pointcloud_input_topic"  default="/$(arg camera)/depth/color/points" />
+    <arg name="filter_axis"             default="z" />
 
-    <!-- Nodelet manager for this pipeline -->
-    <node pkg="nodelet" type="nodelet" args="manager" name="pcl_manager" output="screen"/>
+    <group ns="$(arg camera)">
+        <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml"> 
+            <arg name="manager"           value="$(arg manager)"/>
+            <arg name="serial_no"         value="$(arg serial_no)"/>
+            <arg name="json_file_path"    value="$(arg json_file_path)"/>
+            <arg name="depth_width"       value="640"/>
+            <arg name="depth_height"      value="480"/>
+            <arg name="depth_fps"         value="30"/>
+            <arg name="color_width"       value="640"/>
+            <arg name="color_height"      value="480"/>
+            <arg name="color_fps"         value="30"/>
+            <arg name="enable_depth"      value="true"/>
+            <arg name="enable_color"      value="true"/>
+            <arg name="enable_infra1"     value="false"/>
+            <arg name="enable_infra2"     value="false"/>
+            <arg name="enable_fisheye"    value="false"/>
+            <arg name="enable_imu"        value="false"/>
+            <arg name="enable_pointcloud" value="true"/>
+            <arg name="enable_sync"       value="true"/>
+            <arg name="tf_prefix"         value="$(arg camera)"/>
+        </include>
 
-    <!-- crop box filtering.... This throws out data that is far away from the
-       table where we are trying to extract data. These values were tuned for
-       the PCD file included using rqt_reconfigure.-->
-    <!-- <node pkg="nodelet" type="nodelet" name="cropbox" args="load pcl/CropBox /pcl_manager" output="screen">
-        <remap from="~input" to="/camera/depth/points" />
-        <rosparam>
-            min_x: -0.75
-            max_x: 0.5
-            min_y: -0.6
-            max_y: 0.1
-            min_z: 0.0
-            max_z: 1.5
-        </rosparam>
-    </node> -->
+        <!-- Nodelet manager for this pipeline -->
+        <!-- <node pkg="nodelet" type="nodelet" args="manager" name="pcl_manager" output="screen"/> -->
 
-    <!-- Pass through nodelet to keep point cloud in a range -->
-    <node pkg="nodelet" type="nodelet" name="passthrough" args="load pcl/PassThrough pcl_manager" output="screen">
-        <remap from="~input" to="$(arg pointcloud_input_topic)"/>
-        <rosparam param="filter_fieldname" subst_value="True">$(arg filter_axis)</rosparam>
-        <rosparam>
-            filter_limit_min: 0.01
-            filter_limit_max: 1.5
-            filter_limit_nefative: False
-        </rosparam>
-    </node>
+        <!-- Pass through nodelet to keep point cloud in a range -->
+        <node pkg="nodelet" type="nodelet" name="passthrough" args="load pcl/PassThrough $(arg manager)" output="screen">
+            <remap from="~input" to="$(arg pointcloud_input_topic)"/>
+            <rosparam param="filter_fieldname" subst_value="True">$(arg filter_axis)</rosparam>
+            <rosparam>
+                filter_limit_min: 0.01
+                filter_limit_max: 1.5
+                filter_limit_nefative: False
+            </rosparam>
+        </node>
 
-    <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
-    <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
-        <remap from="~input" to="/passthrough/output"/>
-        <rosparam param="filter_field_name" subst_value="True">$(arg filter_axis)</rosparam>
-        <rosparam>
-            filter_limit_min: 0.01
-            filter_limit_max: 1.5
-            filter_limit_negative: False
-            leaf_size: 0.01
-        </rosparam>
-    </node>
+        <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+        <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid $(arg manager)" output="screen">
+            <remap from="~input" to="/$(arg camera)/passthrough/output"/>
+            <rosparam param="filter_field_name" subst_value="True">$(arg filter_axis)</rosparam>
+            <rosparam>
+                filter_limit_min: 0.01
+                filter_limit_max: 1.5
+                filter_limit_negative: False
+                leaf_size: 0.01
+            </rosparam>
+        </node>
 
+        <include file="$(find arm_vs)/launch/capture_template.launch" if="$(arg capture_template)">
+            <arg name="manager"     value="$(arg manager)" />
+            <arg name="ns"          value="/$(arg camera)" />
+        </include>
 
-    <include file="$(find openni2_launch)/launch/openni2.launch" if="$(eval openni_device == 'true')"/>
+    </group>
+
 </launch>

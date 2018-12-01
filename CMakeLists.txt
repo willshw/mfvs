@@ -128,6 +128,21 @@ add_dependencies(${PROJECT_NAME}_align_obj_pointcloud
   ${catkin_EXPORTED_TARGETS}
 )
 
+# save color cloud to pcd
+add_executable(${PROJECT_NAME}_save_color_cloud
+  src/save_to_pcd.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}_save_color_cloud
+  ${catkin_LIBRARIES}
+  ${roscpp_LIBRARIES}
+  ${PCL_LIBRARIES}
+)
+
+add_dependencies(${PROJECT_NAME}_save_color_cloud
+  ${catkin_EXPORTED_TARGETS}
+)
+
 #point cloud tracking
 # add_executable(${PROJECT_NAME}_pointcloud_tracking
 #   src/pointcloud_tracking.cpp

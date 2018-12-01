@@ -1,14 +1,18 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="template_pointcloud_filename" value="$(find arm_vs)/dataset/mustard/mustard.pcd"/>
-    <arg name="input_pointcloud" value="/voxel_grid/output" />
-    <arg name="tracked_pointcloud" value="/tracked_pointcloud" />
-    <arg name="output_pointcloud" value="/aligned_pointcloud" />
+    <arg name="ns"                                  default="" />
 
-    <arg name="tracked_template_frame" value="particle_filter_tracked_template_frame" />
-    <arg name="tracker_reset_service" value="reset_particle_filter_tracker" />
+    <arg name="template_file_dir"                   default="vitamin/ptcld_9.pcd">
+    <arg name="template_pointcloud_filename"        default="$(find arm_vs)/dataset/$(arg template_file_dir)" />
+    
+    <arg name="input_pointcloud"                    default="$(arg ns)/voxel_grid/output" />
+    <arg name="tracked_pointcloud"                  default="$(arg ns)/tracked_pointcloud" />
+    <arg name="output_pointcloud"                   default="$(arg ns)/aligned_pointcloud" />
 
-    <arg name="icp_alignment_frame" value="icp_alignment_frame" />
+    <arg name="tracked_template_frame"              default="particle_filter_tracked_template_frame" />
+    <arg name="tracker_reset_service"               default="reset_particle_filter_tracker" />
+
+    <arg name="icp_alignment_frame"                 default="icp_alignment_frame" />
 
     <node pkg="arm_vs" type="arm_vs_track_obj_pointcloud" name="pointcloud_tracking" output="screen">
         <param name="input_pointcloud_topic" type="string" value="$(arg input_pointcloud)" />
