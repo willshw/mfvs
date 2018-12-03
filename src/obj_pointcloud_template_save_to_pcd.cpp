@@ -1,3 +1,8 @@
+/**
+ * This node subscribe to point cloud topic and save the point cloud data to pcd file.
+ * pointcloud_to_pcd in pcl_ros only saves the XYZ pointcloud; RGB info can be saved using this node
+ */
+
 #include "ros/ros.h"
 #include "pcl_ros/point_cloud.h"
 
