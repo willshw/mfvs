@@ -1,11 +1,14 @@
 <?xml version="1.0"?>
 <launch>
 
-    <arg name="manager"                         default="pcl_manager" />
-    <arg name="ns"                              default="" />
+    <arg name="nodelet_manager"                     default="pcl_manager" />
+    <arg name="ns"                                  default="" />
+    <arg name="saving_pointcloud_target_folder"     default="$(find arm_vs)/dataset" />
+    <arg name="saving_pointcloud_filename_prefix"   default="ptcld_" />
+
 
     <!-- Estimate point normals -->
-    <node pkg="nodelet" type="nodelet" name="normal_estimation" args="load pcl/NormalEstimation $(arg manager)" output="screen">
+    <node name="normal_estimation" pkg="nodelet" type="nodelet" args="load pcl/NormalEstimation $(arg nodelet_manager)" output="screen">
         <remap from="~input" to="$(arg ns)/voxel_grid/output" />
         <rosparam>
             k_search: 0
@@ -14,8 +17,8 @@
         </rosparam>
     </node>
 
-    <!-- Segment the table plane -->
-    <node pkg="nodelet" type="nodelet" name="planar_segmentation" args="load pcl/SACSegmentationFromNormals $(arg manager)" output="screen">
+    <!-- Segment the plane -->
+    <node name="planar_segmentation" pkg="nodelet" type="nodelet" args="load pcl/SACSegmentationFromNormals $(arg nodelet_manager)" output="screen">
         <remap from="~input"   to="$(arg ns)/voxel_grid/output" />
         <remap from="~normals" to="$(arg ns)/normal_estimation/output" />
         <rosparam>
@@ -29,12 +32,20 @@
         </rosparam>
     </node>
 
-    <node pkg="nodelet" type="nodelet" name="extract_plane_indices" args="load pcl/ExtractIndices $(arg manager)" output="screen">
+    <!-- Extract indices that are not the plane -->
+    <node name="extract_plane_indices" pkg="nodelet" type="nodelet" args="load pcl/ExtractIndices $(arg nodelet_manager)" output="screen">
         <remap from="~input"   to="$(arg ns)/voxel_grid/output" />
         <remap from="~indices" to="$(arg ns)/planar_segmentation/inliers" />
         <rosparam>
             negative: true
         </rosparam>
+    </node>
+
+    <!-- Save the non-planar points to pcd files -->
+    <node name="pointcloud_template_saving" pkg="arm_vs" type="arm_vs_obj_pointcloud_template_save_to_pcd" output="screen">
+        <param name="input_pointcloud_topic"    type="string" value="/$(arg ns)/extract_plane_indices/output" />
+        <param name="target_folder"             type="string" value="$(arg saving_pointcloud_target_folder)" />
+        <param name="filename_prefix"           type="string" value="$(arg saving_pointcloud_filename_prefix)" />
     </node>
 
 </launch>

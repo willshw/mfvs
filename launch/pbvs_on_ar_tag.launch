@@ -1,18 +1,18 @@
 <?xml version="1.0"?>
 <launch>
     <include file="$(find mico_interaction)/launch/mico_moveit_sim.launch">
-        <arg name="eye_in_hand" value="true"/>
-        <arg name="world_file" value="$(find gazebo_control)/worlds/world_with_table_and_ar_tag0.world"/>
+        <arg name="eye_in_hand"      value="true"/>
+        <arg name="world_file"       value="$(find gazebo_control)/worlds/world_with_table_and_ar_tag0.world"/>
     </include>
 
-    <arg name="marker_size" default="10.0" />
-	<arg name="max_new_marker_error" default="0.2" />
+    <arg name="marker_size"             default="10.0" />
+	<arg name="max_new_marker_error"    default="0.2" />
 	
-	<arg name="max_track_error" default="0.4" />
+	<arg name="max_track_error"         default="0.4" />
 
-	<arg name="cam_image_topic" default="/camera/rgb/image_raw" />
-	<arg name="cam_info_topic" default="/camera/rgb/camera_info" />
-	<arg name="output_frame" default="/camera_rgb_optical_frame" />
+	<arg name="cam_image_topic"         default="/camera/rgb/image_raw" />
+	<arg name="cam_info_topic"          default="/camera/rgb/camera_info" />
+	<arg name="output_frame"            default="/camera_rgb_optical_frame" />
 
 	<node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkersNoKinect" respawn="false" output="screen">
 		<param name="marker_size"           type="double" value="$(arg marker_size)" />

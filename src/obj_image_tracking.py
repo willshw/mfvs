@@ -37,33 +37,23 @@ class Tracker:
         # OpenCV tracker
         self.image_tracker_type = rospy.get_param("~tracker_type", "CSRT")
         rospy.loginfo("Image Tracker Type: %s", self.image_tracker_type)
+        if self.image_tracker_type not in ["KCF", "MOSSE", "CSRT", "GOTURN"]:
+            exit(0)
 
         self.ROI_initialized = False
         self.image_tracking_bbox = (0, 0, 639, 479)
 
-        if self.image_tracker_type == 'BOOSTING':
-            self.tracker = cv2.TrackerBoosting_create()
-
-        if self.image_tracker_type == 'MIL':
-            self.tracker = cv2.TrackerMIL_create()
-
         if self.image_tracker_type == 'KCF':
             self.tracker = cv2.TrackerKCF_create()
-
-        if self.image_tracker_type == 'TLD':
-            self.tracker = cv2.TrackerTLD_create()
-
-        if self.image_tracker_type == 'MEDIANFLOW':
-            self.tracker = cv2.TrackerMedianFlow_create()
-
-        if self.image_tracker_type == 'GOTURN':
-            self.tracker = cv2.TrackerGOTURN_create()
 
         if self.image_tracker_type == 'MOSSE':
             self.tracker = cv2.TrackerMOSSE_create()
 
         if self.image_tracker_type == "CSRT":
             self.tracker = cv2.TrackerCSRT_create()
+
+        if self.image_tracker_type == "GOTURN":
+            self.tracker = cv2.TrackerGOTURN_create()
 
     def getPointIndices(self, p1, p2, image_res_w, image_res_h):
         height = p2[1] - p1[1] + 1

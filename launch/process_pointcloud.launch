@@ -1,14 +1,23 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="manager"                 default="realsense2_camera_manager"/>
-    <arg name="capture_template"        default="false" />
-    <arg name="serial_no"               default=""/>
-    <arg name="json_file_path"          default=""/>
-    <arg name="camera"                  default="realsense" />
-    <arg name="pointcloud_input_topic"  default="/$(arg camera)/depth/color/points" />
-    <arg name="filter_axis"             default="z" />
+    <!-- Arguments for launching Realsense camera -->
+    <arg name="manager"                               default="realsense2_camera_manager"/>
+    <arg name="camera"                                default="realsense" />
+    <arg name="serial_no"                             default=""/>
+    <arg name="json_file_path"                        default=""/>
+
+    <!-- Arguments for PCL nodelets -->
+    <arg name="pointcloud_input_topic"                default="/$(arg camera)/depth/color/points" />
+    <arg name="filter_axis"                           default="z" />
+
+    <!-- Arguments for template capture -->
+    <arg name="capture_template"                      default="false" />
+    <arg name="template_pointcloud_target_folder"     default="$(find arm_vs)/dataset/vitamin" />
+    <arg name="template_pointcloud_filename_prefix"   default="ptcld_" />
 
     <group ns="$(arg camera)">
+
+        <!-- Realsense camera launcher -->
         <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml"> 
             <arg name="manager"           value="$(arg manager)"/>
             <arg name="serial_no"         value="$(arg serial_no)"/>
@@ -30,11 +39,8 @@
             <arg name="tf_prefix"         value="$(arg camera)"/>
         </include>
 
-        <!-- Nodelet manager for this pipeline -->
-        <!-- <node pkg="nodelet" type="nodelet" args="manager" name="pcl_manager" output="screen"/> -->
-
         <!-- Pass through nodelet to keep point cloud in a range -->
-        <node pkg="nodelet" type="nodelet" name="passthrough" args="load pcl/PassThrough $(arg manager)" output="screen">
+        <node name="passthrough" pkg="nodelet" type="nodelet" args="load pcl/PassThrough $(arg manager)" output="screen">
             <remap from="~input" to="$(arg pointcloud_input_topic)"/>
             <rosparam param="filter_fieldname" subst_value="True">$(arg filter_axis)</rosparam>
             <rosparam>
@@ -45,20 +51,23 @@
         </node>
 
         <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
-        <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid $(arg manager)" output="screen">
+        <node name="voxel_grid" pkg="nodelet" type="nodelet" args="load pcl/VoxelGrid $(arg manager)" output="screen">
             <remap from="~input" to="/$(arg camera)/passthrough/output"/>
             <rosparam param="filter_field_name" subst_value="True">$(arg filter_axis)</rosparam>
             <rosparam>
                 filter_limit_min: 0.01
                 filter_limit_max: 1.5
                 filter_limit_negative: False
-                leaf_size: 0.01
+                leaf_size: 0.005
             </rosparam>
         </node>
 
+        <!-- Template capture -->
         <include file="$(find arm_vs)/launch/capture_template.launch" if="$(arg capture_template)">
-            <arg name="manager"     value="$(arg manager)" />
-            <arg name="ns"          value="/$(arg camera)" />
+            <arg name="nodelet_manager"                     value="$(arg manager)" />
+            <arg name="ns"                                  value="/$(arg camera)" />
+            <arg name="saving_pointcloud_target_folder"     value="$(arg template_pointcloud_target_folder)" />
+            <arg name="saving_pointcloud_filename_prefix"   value="$(arg template_pointcloud_filename_prefix)" />
         </include>
 
     </group>

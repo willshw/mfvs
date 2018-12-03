@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<launch>
+    <node name="zed_cam" pkg="arm_vs" type="zed_remote_launch.sh" output="screen" />
+
+    <include file="$(find arm_vs)/launch/pointcloud_proc.launch">
+        <arg name="pointcloud_input_topic" default="/point_cloud/cloud_registered" />
+        <arg name="openni_device" default="false" />
+        <arg name="filter_axis" default="x" />
+    </include>
+
+
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find arm_vs)/rviz/zed_mini.rviz"/>
+</launch>

@@ -1,18 +1,28 @@
 <?xml version="1.0"?>
 <launch>
+    <arg name="control_hz"                                  default="50.0" />
+    <arg name="control_gain"                                default="1.5" />
+    <arg name="control_deadband_error"                      default="0.0002" />
+    
+    <arg name="target_camera_frame"                         default="desired_cam_frame" />
+    <arg name="current_camera_frame"                        default="camera_rgb_optical_frame" />
+    <arg name="robot_base_frame"                            default="mico_link_base">
 
-<!-- PBVS Node -->
-	<node name="pbvs" pkg="arm_vs" type="arm_vs_pbvs" output="screen">
-		<param name="pbvs_control_loop_hz" value="50.0" type="double"/>
-		<param name="pbvs_control_law_gain_lambda" value="1.5" type="double"/>
-		<param name="pbvs_control_deadband_error" value="0.0002" type="double"/>
+    <arg name="command_ee_cartesian_velocity_topic"         default="/control_input" />
+    <arg name="command_ee_cartesian_velocity_topic_hz"      default="50.0" />
 
-		<param name="desired_camera_frame" value="desired_cam_frame" type="string"/>
-		<param name="current_camera_frame" value="camera_rgb_optical_frame" type="string"/>
-        <param name="robot_body_frame" value="mico_link_base" type="string"/>
+    <!-- PBVS Node -->
+    <node name="pbvs" pkg="arm_vs" type="arm_vs_pbvs" output="screen">
+        <param name="pbvs_control_loop_hz"              type="double" value="$(arg control_hz)" />
+        <param name="pbvs_control_law_gain_lambda"      type="double" value="$(arg control_gain)" />
+        <param name="pbvs_control_deadband_error"       type="double" value="$(arg control_deadband_error)" />
 
-		<param name="control_input_topic" value="/control_input" type="string"/>
-		<param name="control_input_topic_hz" value="50.0" type="double"/>
-	</node>
+        <param name="desired_camera_frame"              type="string" value="$(arg target_camera_frame)" />
+        <param name="current_camera_frame"              type="string" value="$(arg current_camera_frame)" />
+        <param name="robot_body_frame"                  type="string" value="$(arg robot_base_frame)" />
+
+        <param name="control_input_topic"               type="string" value="$(arg command_ee_cartesian_velocity_topic)" />
+        <param name="control_input_topic_hz"            type="string" value="$(arg command_ee_cartesian_velocity_topic_hz)" />
+    </node>
 
 </launch>

@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<launch>
+
+    <!-- Arguments for launching Realsense camera -->
+    <arg name="manager"                               default="realsense2_camera_manager"/>
+    <arg name="camera"                                default="realsense" />
+    <arg name="serial_no"                             default=""/>
+    <arg name="json_file_path"                        default=""/>
+
+    <!-- Arguments for Image Tracker -->
+    <arg name="tracker_image_source_topic"            default="/$(arg camera)/color/image_raw" />
+    <arg name="tracker_image_output_topic"            default="/tracked_frame" />
+    <arg name="tracker_type"                          default="CSRT" />
+    <arg name="tracker_bbox_topic"                    default="/tracked_obj_bbox" />
+
+    <!-- Arguments for Object Point Cloud Extraction -->
+    <arg name="extractor_input_point_cloud_topic"     default="/$(arg camera)/depth/color/points" />
+    <arg name="extractor_input_bbox_topic"            default="$(arg tracker_bbox_topic)" />
+    <arg name="extractor_output_point_cloud_topic"    default="/tracked_object_point_cloud" />
+
+    <!-- Arguments for PCL nodelets -->
+    <arg name="pointcloud_input_topic"                default="/$(arg camera)/depth/color/points" />
+    <arg name="filter_axis"                           default="z" />
+
+    <!-- Arguments for template capture -->
+    <arg name="capture_template"                      default="false" />
+    <arg name="template_pointcloud_target_folder"     default="$(find arm_vs)/dataset/vitamin" />
+    <arg name="template_pointcloud_filename_prefix"   default="ptcld_" />
+
+    <group ns="$(arg camera)">
+
+        <!-- Realsense camera launcher -->
+        <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml"> 
+            <arg name="manager"           value="$(arg manager)"/>
+            <arg name="serial_no"         value="$(arg serial_no)"/>
+            <arg name="json_file_path"    value="$(arg json_file_path)"/>
+            <arg name="depth_width"       value="640"/>
+            <arg name="depth_height"      value="480"/>
+            <arg name="depth_fps"         value="30"/>
+            <arg name="color_width"       value="640"/>
+            <arg name="color_height"      value="480"/>
+            <arg name="color_fps"         value="30"/>
+            <arg name="enable_depth"      value="true"/>
+            <arg name="enable_color"      value="true"/>
+            <arg name="enable_infra1"     value="false"/>
+            <arg name="enable_infra2"     value="false"/>
+            <arg name="enable_fisheye"    value="false"/>
+            <arg name="enable_imu"        value="false"/>
+            <arg name="enable_pointcloud" value="true"/>
+            <arg name="enable_sync"       value="true"/>
+            <arg name="tf_prefix"         value="$(arg camera)"/>
+        </include>
+
+        <!-- Image tracker -->
+        <node name="object_image_tracking" pkg="arm_vs" type="arm_vs_obj_image_tracking" output="screen" >
+            <param name="input_image_topic"     type="string" value="$(arg tracker_image_source_topic)" />
+            <param name="output_image_topic"    type="string" value="$(arg tracker_image_output_topic)" />
+            <param name="tracker_type"          type="string" value="$(arg tracker_type)" />
+            <param name="output_bbox_topic"     type="string" value="$(arg tracker_bbox_topic)" />
+        </node>
+
+        <!-- Point cloud extractor -->
+        <node name="object_pointcloud_extractor" pkg="arm_vs" type="arm_vs_obj_pointcloud_extraction" output="screen" >
+            <param name="input_pointcloud_topic"    type="string" value="$(arg extractor_input_point_cloud_topic)" />
+            <param name="input_bbox_topic"          type="string" value="$(arg extractor_input_bbox_topic)" />
+            <param name="output_pointcloud_topic"   type="string" value="$(arg extractor_output_point_cloud_topic)" />
+        </node>
+
+        <!-- Pass through nodelet to keep point cloud in a range -->
+        <!-- <node name="passthrough" pkg="nodelet" type="nodelet" args="load pcl/PassThrough $(arg manager)" output="screen">
+            <remap from="~input" to="$(arg extractor_output_point_cloud_topic)"/>
+            <rosparam param="filter_fieldname" subst_value="True">$(arg filter_axis)</rosparam>
+            <rosparam>
+                filter_limit_min: 0.01
+                filter_limit_max: 1.5
+                filter_limit_nefative: False
+            </rosparam>
+        </node> -->
+
+        <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+        <!-- <node name="voxel_grid" pkg="nodelet" type="nodelet" args="load pcl/VoxelGrid $(arg manager)" output="screen">
+            <remap from="~input" to="/$(arg camera)/passthrough/output"/>
+            <rosparam param="filter_field_name" subst_value="True">$(arg filter_axis)</rosparam>
+            <rosparam>
+                filter_limit_min: 0.01
+                filter_limit_max: 1.5
+                filter_limit_negative: False
+                leaf_size: 0.005
+            </rosparam>
+        </node> -->
+
+        <!-- Template capture -->
+        <include file="$(find arm_vs)/launch/capture_template.launch" if="$(arg capture_template)">
+            <arg name="nodelet_manager"                     value="$(arg manager)" />
+            <arg name="ns"                                  value="/$(arg camera)" />
+            <arg name="saving_pointcloud_target_folder"     value="$(arg template_pointcloud_target_folder)" />
+            <arg name="saving_pointcloud_filename_prefix"   value="$(arg template_pointcloud_filename_prefix)" />
+        </include>
+
+    </group>
+
+    <node name="viewer" pkg="rqt_image_view" type="rqt_image_view" />
+
+</launch>

@@ -49,7 +49,7 @@ include_directories(
 add_message_files(
   FILES
   CartVelCmd.msg
-  Rect.msg
+  BBox.msg
 )
 
 generate_messages(
@@ -66,7 +66,7 @@ catkin_package(
 
 # PBVS
 add_executable(${PROJECT_NAME}_pbvs
-  src/pbvs_ar_tag.cpp
+  src/pbvs.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_pbvs
@@ -80,97 +80,83 @@ add_dependencies(${PROJECT_NAME}_pbvs
   arm_vs_generate_messages_cpp
 )
 
-# node for extracing pointcloud according to 2d tracking obj
-add_executable(${PROJECT_NAME}_extract_obj_pointcloud
-  src/extract_obj_pointcloud.cpp
+# node for rgb tracking
+add_executable(${PROJECT_NAME}_obj_image_tracking
+  src/obj_image_tracking.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_extract_obj_pointcloud
+target_link_libraries(${PROJECT_NAME}_obj_image_tracking
+  ${catkin_LIBRARIES}
+  ${roscpp_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+add_dependencies(${PROJECT_NAME}_obj_image_tracking
+  ${catkin_EXPORTED_TARGETS}
+  arm_vs_generate_messages_cpp
+)
+
+# node for extracing pointcloud according to rgb obj tracking
+add_executable(${PROJECT_NAME}_obj_pointcloud_extraction
+  src/obj_pointcloud_extraction.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}_obj_pointcloud_extraction
   ${catkin_LIBRARIES}
   ${roscpp_LIBRARIES}
   ${PCL_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
-add_dependencies(${PROJECT_NAME}_extract_obj_pointcloud
+add_dependencies(${PROJECT_NAME}_obj_pointcloud_extraction
   ${catkin_EXPORTED_TARGETS}
+  arm_vs_generate_messages_cpp
 )
 
 # tracking pointcloud using template
-add_executable(${PROJECT_NAME}_track_obj_pointcloud
-  src/track_obj_pointcloud.cpp
+add_executable(${PROJECT_NAME}_obj_pointcloud_tracking
+  src/obj_pointcloud_tracking.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_track_obj_pointcloud
+target_link_libraries(${PROJECT_NAME}_obj_pointcloud_tracking
   ${catkin_LIBRARIES}
   ${roscpp_LIBRARIES}
   ${Boost_LIBRARIES}
   ${PCL_LIBRARIES}
 )
 
-add_dependencies(${PROJECT_NAME}_track_obj_pointcloud
+add_dependencies(${PROJECT_NAME}_obj_pointcloud_tracking
   ${catkin_EXPORTED_TARGETS}
 )
 
 # align pointcloud using template
-add_executable(${PROJECT_NAME}_align_obj_pointcloud
-  src/align_obj_pointcloud.cpp
+add_executable(${PROJECT_NAME}_obj_pointcloud_alignment
+  src/obj_pointcloud_alignment.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_align_obj_pointcloud
+target_link_libraries(${PROJECT_NAME}_obj_pointcloud_alignment
   ${catkin_LIBRARIES}
   ${roscpp_LIBRARIES}
   ${Boost_LIBRARIES}
   ${PCL_LIBRARIES}
 )
 
-add_dependencies(${PROJECT_NAME}_align_obj_pointcloud
+add_dependencies(${PROJECT_NAME}_obj_pointcloud_alignment
   ${catkin_EXPORTED_TARGETS}
 )
 
 # save color cloud to pcd
-add_executable(${PROJECT_NAME}_save_color_cloud
-  src/save_to_pcd.cpp
+add_executable(${PROJECT_NAME}_obj_pointcloud_template_save_to_pcd
+  src/obj_pointcloud_template_save_to_pcd.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_save_color_cloud
+target_link_libraries(${PROJECT_NAME}_obj_pointcloud_template_save_to_pcd
   ${catkin_LIBRARIES}
   ${roscpp_LIBRARIES}
   ${PCL_LIBRARIES}
 )
 
-add_dependencies(${PROJECT_NAME}_save_color_cloud
+add_dependencies(${PROJECT_NAME}_obj_pointcloud_template_save_to_pcd
   ${catkin_EXPORTED_TARGETS}
 )
-
-#point cloud tracking
-# add_executable(${PROJECT_NAME}_pointcloud_tracking
-#   src/pointcloud_tracking.cpp
-# )
-
-# target_link_libraries(${PROJECT_NAME}_pointcloud_tracking
-#   ${catkin_LIBRARIES}
-#   ${roscpp_LIBRARIES}
-#   ${Boost_LIBRARIES}
-#   ${PCL_LIBRARIES}
-# )
-
-# add_dependencies(${PROJECT_NAME}_pointcloud_tracking
-#   ${catkin_EXPORTED_TARGETS}
-# )
-
-#visual tracking
-# add_executable(${PROJECT_NAME}_cv_tracking
-#   src/cv_tracking.cpp
-# )
-
-# target_link_libraries(${PROJECT_NAME}_cv_tracking
-#   ${catkin_LIBRARIES}
-#   ${roscpp_LIBRARIES}
-#   ${OpenCV_LIBRARIES}
-# )
-
-# add_dependencies(${PROJECT_NAME}_cv_tracking
-#   ${catkin_EXPORTED_TARGETS}
-# )
-

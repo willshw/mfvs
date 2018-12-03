@@ -1,37 +1,37 @@
-#include <ros/ros.h>
-#include <pcl_ros/point_cloud.h>
-#include <tf2_ros/transform_broadcaster.h>
-#include <tf2_eigen/tf2_eigen.h>
+#include "ros/ros.h"
+#include "pcl_ros/point_cloud.h"
+#include "tf2_ros/transform_broadcaster.h"
+#include "tf2_eigen/tf2_eigen.h"
 
-#include <pcl/point_types.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/conversions.h>
+#include "pcl/point_types.h"
+#include "pcl/io/pcd_io.h"
+#include "pcl/conversions.h"
 
-#include <pcl/common/time.h>
-#include <pcl/common/centroid.h>
-#include <pcl/common/transforms.h>
+#include "pcl/common/time.h"
+#include "pcl/common/centroid.h"
+#include "pcl/common/transforms.h"
 
-#include <pcl/tracking/tracking.h>
+#include "pcl/tracking/tracking.h"
 
-#include <pcl/tracking/particle_filter.h>
-#include <pcl/tracking/kld_adaptive_particle_filter_omp.h>
-#include <pcl/tracking/particle_filter_omp.h>
+#include "pcl/tracking/particle_filter.h"
+#include "pcl/tracking/kld_adaptive_particle_filter_omp.h"
+#include "pcl/tracking/particle_filter_omp.h"
 
-#include <pcl/tracking/coherence.h>
-#include <pcl/tracking/distance_coherence.h>
-#include <pcl/tracking/hsv_color_coherence.h>
-#include <pcl/tracking/approx_nearest_pair_point_cloud_coherence.h>
-#include <pcl/tracking/nearest_pair_point_cloud_coherence.h>
+#include "pcl/tracking/coherence.h"
+#include "pcl/tracking/distance_coherence.h"
+#include "pcl/tracking/hsv_color_coherence.h"
+#include "pcl/tracking/approx_nearest_pair_point_cloud_coherence.h"
+#include "pcl/tracking/nearest_pair_point_cloud_coherence.h"
 
-#include <boost/foreach.hpp>
-#include <boost/format.hpp>
+#include "boost/foreach.hpp"
+#include "boost/format.hpp"
 
 // msgs
-#include <sensor_msgs/PointCloud2.h>
-#include <geometry_msgs/TransformStamped.h>
+#include "sensor_msgs/PointCloud2.h"
+#include "geometry_msgs/TransformStamped.h"
 
 // srv
-#include <std_srvs/Trigger.h>
+#include "std_srvs/Trigger.h"
 
 typedef pcl::PointXYZRGB RefPointType;
 
@@ -135,7 +135,7 @@ class PointcloudTracking{
         counter = 0;
 
         // Set tracker parameters
-        std::vector<double> default_step_covariance = std::vector<double> (6, 0.015 * 0.015);
+        std::vector<double> default_step_covariance = std::vector<double> (6, 0.010 * 0.010);
         default_step_covariance[3] *= 40.0;
         default_step_covariance[4] *= 40.0;
         default_step_covariance[5] *= 40.0;
@@ -147,12 +147,12 @@ class PointcloudTracking{
             (new pcl::tracking::KLDAdaptiveParticleFilterOMPTracker<RefPointType, ParticleT> (8)); // 8 is the number of threads
 
         ParticleT bin_size;
-        bin_size.x = 0.1f;
-        bin_size.y = 0.1f;
-        bin_size.z = 0.1f;
-        bin_size.roll = 0.1f;
-        bin_size.pitch = 0.1f;
-        bin_size.yaw = 0.1f;
+        bin_size.x = 0.10f;
+        bin_size.y = 0.10f;
+        bin_size.z = 0.10f;
+        bin_size.roll = 0.10f;
+        bin_size.pitch = 0.10f;
+        bin_size.yaw = 0.10f;
 
         //Set all parameters for  KLDAdaptiveParticleFilterOMPTracker
         tracker->setMaximumParticleNum (1000);

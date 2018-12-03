@@ -1,32 +1,32 @@
 #include <vector>
 #include <iostream>
 
-#include <ros/ros.h>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
-#include <tf2_eigen/tf2_eigen.h>
+#include "ros/ros.h"
+#include "tf2_ros/buffer.h"
+#include "tf2_ros/transform_listener.h"
+#include "tf2_eigen/tf2_eigen.h"
 
-#include <Eigen/Dense>
-#include <Eigen/Geometry>
+#include "Eigen/Dense"
+#include "Eigen/Geometry"
 
 // ViSP
-#include <visp3/core/vpMath.h>
-#include <visp3/core/vpColVector.h>
-#include <visp3/core/vpHomogeneousMatrix.h>
-#include <visp3/core/vpMatrix.h>
-#include <visp3/core/vpTranslationVector.h>
-#include <visp3/core/vpQuaternionVector.h>
-#include <visp3/visual_features/vpFeatureThetaU.h>
-#include <visp3/visual_features/vpFeatureTranslation.h>
-#include <visp3/vs/vpServo.h>
+#include "visp3/core/vpMath.h"
+#include "visp3/core/vpColVector.h"
+#include "visp3/core/vpHomogeneousMatrix.h"
+#include "visp3/core/vpMatrix.h"
+#include "visp3/core/vpTranslationVector.h"
+#include "visp3/core/vpQuaternionVector.h"
+#include "visp3/visual_features/vpFeatureThetaU.h"
+#include "visp3/visual_features/vpFeatureTranslation.h"
+#include "visp3/vs/vpServo.h"
 
 // msgs
-#include <std_msgs/String.h>
-// #include <sensor_msgs/image_encodings.h>
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/Twist.h>
-#include <geometry_msgs/TransformStamped.h>
-#include <arm_vs/CartVelCmd.h>
+#include "std_msgs/String.h"
+// #include "sensor_msgs/image_encodings.h"
+#include "geometry_msgs/Pose.h"
+#include "geometry_msgs/Twist.h"
+#include "geometry_msgs/TransformStamped.h"
+#include "arm_vs/CartVelCmd.h"
 
 
 class VisualServoing{
@@ -227,7 +227,10 @@ class VisualServoing{
 
                     // command end effector twist to robot
                     if(error >= pbvs_control_deadband_error){
-                        control_input.velocity.data = {Vb[3], Vb[4], Vb[5], Vb[0], Vb[1], Vb[2]};
+                        control_input.velocity.data = {
+                            static_cast<float>(Vb[3]), static_cast<float>(Vb[4]), static_cast<float>(Vb[5]), 
+                            static_cast<float>(Vb[0]), static_cast<float>(Vb[1]), static_cast<float>(Vb[2])
+                        };
                     }
                     else{
                         control_input.velocity.data = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
