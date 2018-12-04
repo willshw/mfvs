@@ -1,3 +1,8 @@
+/**
+ * This node used object point cloud template and particle filter to track object in
+ * current point cloud scene.
+ */
+
 #include "ros/ros.h"
 #include "pcl_ros/point_cloud.h"
 #include "tf2_ros/transform_broadcaster.h"
@@ -83,8 +88,6 @@ class PointcloudTracking{
     }
 
     void pointcloud_sub_callback(const CloudConstPtr& msg_cloud){
-        // ROS_INFO("Cloud: width = %d, height = %d\n", msg_cloud->width, msg_cloud->height);
-
         if(counter < 10){
             counter++;
         }else{

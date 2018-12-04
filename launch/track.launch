@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Arguments for camera launch file -->
+    <!-- Arguments for launching Realsense camera -->
+    <arg name="nodelet_manager"                                     default="realsense2_camera_manager"/>
+    <arg name="camera"                                              default="realsense" />
+
+    <!-- Arguments for image tracking and point cloud extraction launch file -->
+    <!-- Arguments for Image Tracker -->
+    <arg name="tracker_image_source_topic"                          default="/$(arg camera)/color/image_raw" />
+    <arg name="tracker_image_output_topic"                          default="/obj_tracking_image" />
+    <arg name="tracker_type"                                        default="CSRT" />
+    <arg name="tracker_bbox_topic"                                  default="/tracked_obj_bbox" />
+
+    <!-- Arguments for Object Point Cloud Extraction -->
+    <arg name="extractor_input_point_cloud_topic"                   default="/$(arg camera)/depth_registered/points" />
+    <arg name="extractor_input_bbox_topic"                          default="$(arg tracker_bbox_topic)" />
+    <arg name="extractor_output_point_cloud_topic"                  default="/tracked_object_point_cloud" />
+
+    <!-- Arguments for PCL nodelets -->
+    <arg name="pcl_nodelet_manager"                                 default="$(arg nodelet_manager)"/>
+    <arg name="filter_axis"                                         default="z" />
+
+    <!-- Arguments for point cloud tracking launch file -->
+    <!-- Arguments for particle filter tracking -->
+    <arg name="pf_tracker_reset_service"                            default="reset_particle_filter_tracker" />
+
+    <arg name="pointcloud_template_pointcloud_filename"             default="$(find arm_vs)/dataset/vitamin/vitamin_bottle.pcd" />
+
+    <arg name="pf_trakcing_input_pointcloud"                        default="/$(arg camera)/voxel_grid/output" />
+    <arg name="pf_tracked_pointcloud"                               default="/pf_tracked_pointcloud" />
+    <arg name="pf_tracked_template_frame"                           default="particle_filter_tracked_template_frame" />
+
+    <!-- Arguments for ICP alignment -->
+    <arg name="icp_output_pointcloud"                               default="/aligned_pointcloud" />
+    <arg name="icp_alignment_frame"                                 default="icp_alignment_frame" />
+
+
+    <!-- LAUNCH FILES -->
+
+    <!-- Realsense camera launcher -->
+    <include file="$(find arm_vs)/launch/open_realsense_cam.launch"> 
+
+        <arg name="nodelet_manager"         value="$(arg nodelet_manager)"/>
+        <arg name="camera"                  value="$(arg camera)" />
+
+    </include>
+
+    <group ns="$(arg camera)">
+
+        <!-- Pass through nodelet to keep point cloud in a range -->
+        <node name="passthrough" pkg="nodelet" type="nodelet" args="load pcl/PassThrough $(arg pcl_nodelet_manager)" output="screen">
+            <remap from="~input" to="$(arg extractor_output_point_cloud_topic)"/>
+            <rosparam param="filter_field_name" subst_value="True">$(arg filter_axis)</rosparam>
+            <rosparam>
+                filter_limit_min: 0.01
+                filter_limit_max: 1.5
+                filter_limit_nefative: False
+            </rosparam>
+        </node>
+
+        <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+        <node name="voxel_grid" pkg="nodelet" type="nodelet" args="load pcl/VoxelGrid $(arg pcl_nodelet_manager)" output="screen">
+            <remap from="~input" to="/$(arg camera)/passthrough/output"/>
+            <rosparam param="filter_field_name" subst_value="True">$(arg filter_axis)</rosparam>
+            <rosparam>
+                filter_limit_min: 0.01
+                filter_limit_max: 1.5
+                filter_limit_negative: False
+                leaf_size: 0.005
+            </rosparam>
+        </node>
+
+    </group>
+
+    <!-- Image tracking and point cloud extraction launcher -->
+    <include file="$(find arm_vs)/launch/track_and_extract_obj_pointcloud.launch"> 
+
+        <arg name="tracker_image_source_topic"                  value="$(arg tracker_image_source_topic)" />
+        <arg name="tracker_image_output_topic"                  value="$(arg tracker_image_output_topic)" />
+        <arg name="tracker_type"                                value="$(arg tracker_type)" />
+        <arg name="tracker_bbox_topic"                          value="$(arg tracker_bbox_topic)" />
+
+        <arg name="extractor_input_point_cloud_topic"           value="$(arg extractor_input_point_cloud_topic)" />
+        <arg name="extractor_input_bbox_topic"                  value="$(arg extractor_input_bbox_topic)" />
+        <arg name="extractor_output_point_cloud_topic"          value="$(arg extractor_output_point_cloud_topic)" />
+
+    </include>
+
+    <!-- Particle filter based point cloud tracking luancher -->
+    <include file="$(find arm_vs)/launch/track_and_align_obj_pointcloud.launch">
+    
+        <arg name="pf_tracker_reset_service"                        value="$(arg pf_tracker_reset_service)" />
+
+        <arg name="pointcloud_template_pointcloud_filename"         value="$(arg pointcloud_template_pointcloud_filename)" />
+
+        <arg name="pf_trakcing_input_pointcloud"                    value="$(arg pf_trakcing_input_pointcloud)" />
+        <arg name="pf_tracked_pointcloud"                           value="$(arg pf_tracked_pointcloud)" />
+        <arg name="pf_tracked_template_frame"                       value="$(arg pf_tracked_template_frame)" />
+
+        <arg name="icp_output_pointcloud"                           value="$(arg icp_output_pointcloud)" />
+        <arg name="icp_alignment_frame"                             value="$(arg icp_alignment_frame)" />
+
+    </include>
+
+</launch>

@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Arguments for launching Realsense camera -->
+    <arg name="nodelet_manager"       default="realsense2_camera_manager"/>
+    <arg name="camera"                default="realsense" />
+
+    <!-- Realsense camera launcher -->
+    <include file="$(find realsense2_camera)/launch/rs_rgbd.launch"> 
+        <arg name="manager"           value="$(arg nodelet_manager)"/>
+        <arg name="camera"            value="$(arg camera)" />
+    </include>
+
+</launch>

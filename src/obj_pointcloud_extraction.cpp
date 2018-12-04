@@ -55,6 +55,22 @@ class Extraction{
         nh.param<std::string>("output_pointcloud_topic", output_pointcloud_topic, "/tracked_object_pointcloud");
     }
 
+    void check(std::pair<int, int> *p, int width, int height){
+        if(p->first < 0){
+            p->first = 0;
+        }
+        else if(p->first > width){
+            p->first = width;
+        }
+
+        if(p->second < 0){
+            p->second = 0;
+        }
+        else if(p->second > height){
+            p->second = height;
+        }
+    }
+
     /**
      * Callback takes in synchronized bounding box message and point cloud message, and extract points in the boudning box
      * region (in x and y), and publishes extracted point cloud.
@@ -67,6 +83,9 @@ class Extraction{
         // bouding box top left pixel location and bottom right pixel location
         std::pair<int, int> tl = std::make_pair(bbox->x, bbox->y);
         std::pair<int, int> br = std::make_pair(bbox->x + bbox->width, bbox->y + bbox->height);
+
+        check(&tl, points->width, points->height);
+        check(&br, points->width, points->height);
 
         // construct point indices array from points in bounding box
         std::vector<int> tracked_indices((bbox->width + 1) * (bbox->height + 1));

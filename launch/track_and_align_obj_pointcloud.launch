@@ -1,35 +1,34 @@
 <?xml version="1.0"?>
 <launch>
 
-    <arg name="ns"                                  default="" />
-
     <!-- Arguments for particle filter tracking -->
-    <arg name="tracker_reset_service"               default="reset_particle_filter_tracker" />
-    <arg name="template_file_dir"                   default="vitamin/ptcld_2.pcd" />
-    <arg name="template_pointcloud_filename"        default="$(find arm_vs)/dataset/$(arg template_file_dir)" />
-    <arg name="input_pointcloud"                    default="$(arg ns)/voxel_grid/output" />
-    <arg name="tracked_pointcloud"                  default="$(arg ns)/tracked_pointcloud" />
-    <arg name="tracked_template_frame"              default="particle_filter_tracked_template_frame" />
+    <arg name="pf_tracker_reset_service"                            default="reset_particle_filter_tracker" />
+
+    <arg name="pointcloud_template_pointcloud_filename"             default="$(find arm_vs)/dataset/vitamin/vitamin_bottle.pcd" />
+
+    <arg name="pf_trakcing_input_pointcloud"                        default="/voxel_grid/output" />
+    <arg name="pf_tracked_pointcloud"                               default="/tracked_pointcloud" />
+    <arg name="pf_tracked_template_frame"                           default="particle_filter_tracked_template_frame" />
 
     <!-- Arguments for ICP alignment -->
-    <arg name="output_pointcloud"                   default="$(arg ns)/aligned_pointcloud" />
-    <arg name="icp_alignment_frame"                 default="icp_alignment_frame" />
+    <arg name="icp_output_pointcloud"                               default="/aligned_pointcloud" />
+    <arg name="icp_alignment_frame"                                 default="icp_alignment_frame" />
 
     <!-- Particle filter tracker -->
     <node name="pointcloud_tracking" pkg="arm_vs" type="arm_vs_obj_pointcloud_tracking" output="screen">
-        <param name="input_pointcloud_topic"                    type="string" value="$(arg input_pointcloud)" />
-        <param name="output_pointcloud_topic"                   type="string" value="$(arg tracked_pointcloud)" />
-        <param name="template_cloud_filename"                   type="string" value="$(arg template_pointcloud_filename)" />
-        <param name="particle_filter_tracked_template_frame"    type="string" value="$(arg tracked_template_frame)" />
-        <param name="particle_filter_tracker_reset_service"     type="string" value="$(arg tracker_reset_service)" />
+        <param name="input_pointcloud_topic"                    type="string" value="$(arg pf_trakcing_input_pointcloud)" />
+        <param name="output_pointcloud_topic"                   type="string" value="$(arg pf_tracked_pointcloud)" />
+        <param name="template_cloud_filename"                   type="string" value="$(arg pointcloud_template_pointcloud_filename)" />
+        <param name="particle_filter_tracked_template_frame"    type="string" value="$(arg pf_tracked_template_frame)" />
+        <param name="particle_filter_tracker_reset_service"     type="string" value="$(arg pf_tracker_reset_service)" />
     </node>
-
+    
     <!-- ICP alignment -->
-    <node name="pointcloud_alignment" pkg="arm_vs" type="arm_vs_obj_pointcloud_alignment" output="screen">
-        <param name="input_template_pointcloud_topic"           type="string" value="$(arg tracked_pointcloud)" />
-        <param name="input_scene_pointcloud_topic"              type="string" value="$(arg input_pointcloud)" />
-        <param name="output_pointcloud_topic"                   type="string" value="$(arg output_pointcloud)" />
+    <!-- <node name="pointcloud_alignment" pkg="arm_vs" type="arm_vs_obj_pointcloud_alignment" output="screen">
+        <param name="input_template_pointcloud_topic"           type="string" value="$(arg pf_tracked_pointcloud)" />
+        <param name="input_scene_pointcloud_topic"              type="string" value="$(arg pf_trakcing_input_pointcloud)" />
+        <param name="output_pointcloud_topic"                   type="string" value="$(arg icp_output_pointcloud)" />
         <param name="icp_alignment_frame"                       type="string" value="$(arg icp_alignment_frame)" />
-    </node>
+    </node> -->
 
 </launch>

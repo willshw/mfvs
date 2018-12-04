@@ -32,7 +32,11 @@ find_package(
 
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(VISP REQUIRED)
-find_package(OpenCV 3.4.3 REQUIRED)
+
+# point OpenCV to the custom version instead of the ros version
+find_package(OpenCV REQUIRED NO_MODULE PATHS /usr/local NO_DEFAULT_PATH )
+set(OpenCV_INCLUDE_DIRS /usr/local/include)
+
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
 

@@ -1,4 +1,10 @@
 ###How to launch PBVS with mico simulation
 
+Package Used:
+realsense2_camera (ROS)
+PCL
+OpenCV 3.4.3
+Boost
+
 1. roslaunch arm_vs vs_ar_tag_tracking.launch
 2. rosservice call /mico_interaction/switch_controllers "controllers_to_be_turned_on: 'velocity'"
