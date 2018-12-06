@@ -1,3 +1,7 @@
+/**
+ * This node takes in desired camera pose and current camera pose and uses VISP code to
+ * calculate the end effector velocity needed to minized the error between two poses mentioned.
+ */
 #include <vector>
 #include <iostream>
 
@@ -67,30 +71,11 @@ class VisualServoing{
             nh.param<double>("pbvs_control_loop_hz", pbvs_control_loop_hz, 50.0);
             nh.param<double>("pbvs_control_gain_lambda", pbvs_control_law_gain_lambda, 1.0);
             nh.param<double>("pbvs_control_deadband_error", pbvs_control_deadband_error, 0.0001);
-
-            if(!nh.hasParam("desired_camera_frame") || !nh.hasParam("current_camera_frame")){
-                ROS_FATAL("Camera frame parameters are not correctly set!");
-            }
-            else{
-                nh.param<std::string>("desired_camera_frame", desired_camera_frame, "/desired_cam_frame");
-                nh.param<std::string>("current_camera_frame", current_camera_frame, "/camera_rgb_optical_frame");
-            }
-
-            if(!nh.hasParam("robot_body_frame")){
-                ROS_FATAL("Robot body frame is not correctly set!");
-            }
-            else{
-                nh.param<std::string>("robot_body_frame", robot_body_frame, "/robot_body_frame");
-            }
-
-            if(!nh.hasParam("control_input_topic")){
-                ROS_FATAL("Control input topic is not correctly set!");
-            }
-            else{
-                nh.param<std::string>("control_input_topic", control_input_topic, "/control_input");
-            }
-
-            nh.param<double>("control_input_topic_hz", control_input_topic_hz, 50.0);
+            nh.param<std::string>("desired_camera_frame", desired_camera_frame, "/desired_cam_frame");
+            nh.param<std::string>("current_camera_frame", current_camera_frame, "/camera_rgb_optical_frame");
+            nh.param<std::string>("robot_body_frame", robot_body_frame, "/robot_body_frame");
+            nh.param<std::string>("control_input_topic", control_input_topic, "/control_input");
+            nh.param<double>("control_input_topic_hz", control_input_topic_hz, 60.0);
         }
 
         void getTwistVectorBodyFrame(Eigen::VectorXd& Vb, Eigen::VectorXd Vc, Eigen::Matrix4d bMc){

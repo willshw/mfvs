@@ -24,11 +24,11 @@
     </node>
     
     <!-- ICP alignment -->
-    <!-- <node name="pointcloud_alignment" pkg="arm_vs" type="arm_vs_obj_pointcloud_alignment" output="screen">
+    <node name="pointcloud_alignment" pkg="arm_vs" type="arm_vs_obj_pointcloud_alignment" output="screen">
         <param name="input_template_pointcloud_topic"           type="string" value="$(arg pf_tracked_pointcloud)" />
         <param name="input_scene_pointcloud_topic"              type="string" value="$(arg pf_trakcing_input_pointcloud)" />
         <param name="output_pointcloud_topic"                   type="string" value="$(arg icp_output_pointcloud)" />
         <param name="icp_alignment_frame"                       type="string" value="$(arg icp_alignment_frame)" />
-    </node> -->
+    </node>
 
 </launch>

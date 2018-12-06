@@ -20,7 +20,7 @@
 #include "arm_vs/BBox.h"
 
 /**
- * workaround to CMake unable to find the correct OpenCV directory
+ * FIXME: workaround to CMake unable to find the correct OpenCV directory
  */
 namespace cv
 {
@@ -159,7 +159,8 @@ class TrackerCV {
     }
 };
 
-int main (int argc, char** argv){
+int main (int argc, char** argv)
+{
     ros::init (argc, argv, "obj_tracking");
     ros::NodeHandle nh ("~");
     TrackerCV tracker (nh);

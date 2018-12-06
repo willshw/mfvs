@@ -1,3 +1,6 @@
+/**
+ * This node takes in alignment from particle filter and refine it with ICP
+*/
 #include "ros/ros.h"
 #include "pcl_ros/point_cloud.h"
 #include "tf2_ros/transform_broadcaster.h"
@@ -28,11 +31,15 @@
 #include "boost/shared_ptr.hpp"
 #include "boost/bind.hpp"
 
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+typedef pcl::PointXYZRGB RefPointType;
+
+typedef pcl::PointCloud<RefPointType> PointCloud;
 typedef pcl::PointCloud<pcl::PointNormal> PointCloud_Normal;
 typedef pcl::PointCloud<pcl::FPFHSignature33> PointCloud_Feature;
-typedef pcl::FPFHEstimationOMP<pcl::PointXYZ, pcl::PointNormal, pcl::FPFHSignature33> FeatureEstimation;
-typedef pcl::search::KdTree<pcl::PointXYZ> SearchMethod;
+
+typedef pcl::FPFHEstimationOMP<RefPointType, pcl::PointNormal, pcl::FPFHSignature33> FeatureEstimation;
+
+typedef pcl::search::KdTree<RefPointType> SearchMethod;
 
 typedef message_filters::sync_policies::ApproximateTime<PointCloud, PointCloud> MySyncPolicy;
 typedef message_filters::Synchronizer<MySyncPolicy> Sync;
@@ -51,12 +58,12 @@ class Alignment{
     std::string output_pointcloud_topic;
     std::string child_frame_id;
 
-    pcl::NormalEstimation<pcl::PointXYZ, pcl::PointNormal> normal_est;
+    pcl::NormalEstimation<RefPointType, pcl::PointNormal> normal_est;
     FeatureEstimation feature_est;
-    pcl::SampleConsensusPrerejective<pcl::PointXYZ, pcl::PointXYZ, pcl::FPFHSignature33> align;
+    pcl::SampleConsensusPrerejective<RefPointType, RefPointType, pcl::FPFHSignature33> align;
     // pcl::SampleConsensusInitialAlignment<pcl::PointXYZ, pcl::PointXYZ, pcl::FPFHSignature33> align;
 
-    pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+    pcl::IterativeClosestPoint<RefPointType, RefPointType> icp;
 
     const float leaf = 0.005f;
 

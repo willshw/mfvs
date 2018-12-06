@@ -25,7 +25,7 @@
     <!-- Arguments for particle filter tracking -->
     <arg name="pf_tracker_reset_service"                            default="reset_particle_filter_tracker" />
 
-    <arg name="pointcloud_template_pointcloud_filename"             default="$(find arm_vs)/dataset/vitamin/vitamin_bottle.pcd" />
+    <arg name="pointcloud_template_pointcloud_filename"             default="$(find arm_vs)/dataset/mustard/mustard.pcd" />
 
     <arg name="pf_trakcing_input_pointcloud"                        default="/$(arg camera)/voxel_grid/output" />
     <arg name="pf_tracked_pointcloud"                               default="/pf_tracked_pointcloud" />
@@ -46,6 +46,7 @@
 
     </include>
 
+    <!-- PCL nodelets for fast point cloud filtering -->
     <group ns="$(arg camera)">
 
         <!-- Pass through nodelet to keep point cloud in a range -->

@@ -5,6 +5,8 @@
  * box information to crop the point cloud and preserve the region of interest, and publishes the
  * point cloud in the region of interest. 
  */
+#include <algorithm>
+
 #include "ros/ros.h"
 #include "pcl_ros/point_cloud.h"
 #include "pcl_msgs/PointIndices.h"
@@ -56,19 +58,10 @@ class Extraction{
     }
 
     void check(std::pair<int, int> *p, int width, int height){
-        if(p->first < 0){
-            p->first = 0;
-        }
-        else if(p->first > width){
-            p->first = width;
-        }
-
-        if(p->second < 0){
-            p->second = 0;
-        }
-        else if(p->second > height){
-            p->second = height;
-        }
+        p->first = std::max(p->first, 0);
+        p->first = std::min(p->first, width - 1);
+        p->second = std::max(p->second, 0);
+        p->second = std::min(p->second, height - 1);
     }
 
     /**

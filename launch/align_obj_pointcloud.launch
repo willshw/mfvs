@@ -1,15 +1,17 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="input_template_pointcloud"   value="/tracked_pointcloud"/>
-    <arg name="input_scene_pointcloud"      value="/voxel_grid/output" />
-    <arg name="output_pointcloud"           value="/aligned_pointcloud" />
+    <!-- Arguments for ICP alignment -->
+    <arg name="pf_trakcing_input_pointcloud"                        default="/voxel_grid/output" />
+    <arg name="pf_tracked_pointcloud"                               default="/tracked_pointcloud" />
+    <arg name="icp_output_pointcloud"                               default="/aligned_pointcloud" />
+    <arg name="icp_alignment_frame"                                 default="icp_alignment_frame" />
 
-    <arg name="icp_alignment_frame"         value="icp_alignment_frame" />
-
+    <!-- ICP alignment -->
     <node name="pointcloud_alignment" pkg="arm_vs" type="arm_vs_obj_pointcloud_alignment" output="screen">
-        <param name="input_template_pointcloud_topic"   type="string" value="$(arg tracked_pointcloud)" />
-        <param name="input_scene_pointcloud_topic"      type="string" value="$(arg input_pointcloud)" />
-        <param name="output_pointcloud_topic"           type="string" value="$(arg output_pointcloud)" />
-        <param name="icp_alignment_frame"               type="string" value="$(arg icp_alignment_frame)" />
+        <param name="input_template_pointcloud_topic"           type="string" value="$(arg pf_tracked_pointcloud)" />
+        <param name="input_scene_pointcloud_topic"              type="string" value="$(arg pf_trakcing_input_pointcloud)" />
+        <param name="output_pointcloud_topic"                   type="string" value="$(arg icp_output_pointcloud)" />
+        <param name="icp_alignment_frame"                       type="string" value="$(arg icp_alignment_frame)" />
     </node>
+
 </launch>

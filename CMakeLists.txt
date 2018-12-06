@@ -34,7 +34,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 find_package(VISP REQUIRED)
 
 # point OpenCV to the custom version instead of the ros version
-find_package(OpenCV REQUIRED NO_MODULE PATHS /usr/local NO_DEFAULT_PATH )
+find_package(OpenCV 3.4.3 REQUIRED NO_MODULE PATHS /usr/local NO_DEFAULT_PATH )
 set(OpenCV_INCLUDE_DIRS /usr/local/include)
 
 find_package(Eigen3 REQUIRED)
@@ -97,6 +97,23 @@ target_link_libraries(${PROJECT_NAME}_obj_image_tracking
 )
 
 add_dependencies(${PROJECT_NAME}_obj_image_tracking
+  ${catkin_EXPORTED_TARGETS}
+  arm_vs_generate_messages_cpp
+)
+
+# node for rgb tracking with object recognition
+add_executable(${PROJECT_NAME}_obj_image_tracking_w_recognition
+  src/obj_image_tracking_w_recognition.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}_obj_image_tracking_w_recognition
+  ${catkin_LIBRARIES}
+  ${roscpp_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+add_dependencies(${PROJECT_NAME}_obj_image_tracking_w_recognition
   ${catkin_EXPORTED_TARGETS}
   arm_vs_generate_messages_cpp
 )
