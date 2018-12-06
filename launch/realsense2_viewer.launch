@@ -37,9 +37,16 @@ limitations under the License.
     <arg name="output_topic"            value="$(arg output_topic)" />
   </include>
 
-
-
   <include file="$(find realsense2_camera)/launch/rs_rgbd.launch"> 
     <arg name="manager"           value="$(arg manager)"/>
   </include>
+
+  <!-- <node name="track_reg" pkg="arm_vs" type="arm_vs_obj_image_tracking_w_recognition" output="screen" >
+      <param name="input_image_topic"     type="string" value="/camera/color/image_raw" />
+      <param name="input_obj_inf_topic"   type="string" value="/opencl_caffe/inference" />
+      <param name="obj_of_interest"       type="string" value="bottle" />
+      <param name="output_image_topic"    type="string" value="/tracked_frame" />
+      <param name="tracker_type"          type="string" value="CSRT" />
+  </node> -->
+
 </launch>
