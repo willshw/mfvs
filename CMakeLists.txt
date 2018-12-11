@@ -181,3 +181,18 @@ target_link_libraries(${PROJECT_NAME}_obj_pointcloud_template_save_to_pcd
 add_dependencies(${PROJECT_NAME}_obj_pointcloud_template_save_to_pcd
   ${catkin_EXPORTED_TARGETS}
 )
+
+add_executable(${PROJECT_NAME}_obj_pointcloud_segmentation
+  src/obj_pointcloud_segmentation.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}_obj_pointcloud_segmentation
+  ${catkin_LIBRARIES}
+  ${roscpp_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+add_dependencies(${PROJECT_NAME}_obj_pointcloud_segmentation
+  ${catkin_EXPORTED_TARGETS}
+)

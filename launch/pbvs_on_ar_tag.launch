@@ -6,28 +6,26 @@
     </include>
 
     <arg name="marker_size"             default="10.0" />
-	<arg name="max_new_marker_error"    default="0.2" />
-	
-	<arg name="max_track_error"         default="0.4" />
+    <arg name="max_new_marker_error"    default="0.2" />
+    
+    <arg name="max_track_error"         default="0.4" />
 
-	<arg name="cam_image_topic"         default="/camera/rgb/image_raw" />
-	<arg name="cam_info_topic"          default="/camera/rgb/camera_info" />
-	<arg name="output_frame"            default="/camera_rgb_optical_frame" />
+    <arg name="cam_image_topic"         default="/camera/rgb/image_raw" />
+    <arg name="cam_info_topic"          default="/camera/rgb/camera_info" />
+    <arg name="output_frame"            default="/camera_rgb_optical_frame" />
 
-	<node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkersNoKinect" respawn="false" output="screen">
-		<param name="marker_size"           type="double" value="$(arg marker_size)" />
-		<param name="max_new_marker_error"  type="double" value="$(arg max_new_marker_error)" />
-		<param name="max_track_error"       type="double" value="$(arg max_track_error)" />
-		<param name="output_frame"          type="string" value="$(arg output_frame)" />
+    <node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkersNoKinect" respawn="false" output="screen">
+        <param name="marker_size"           type="double" value="$(arg marker_size)" />
+        <param name="max_new_marker_error"  type="double" value="$(arg max_new_marker_error)" />
+        <param name="max_track_error"       type="double" value="$(arg max_track_error)" />
+        <param name="output_frame"          type="string" value="$(arg output_frame)" />
 
-		<remap from="camera_image"  to="$(arg cam_image_topic)" />
-		<remap from="camera_info"   to="$(arg cam_info_topic)" />
-	</node>
-
-    <!-- <node name="image_proc" pkg="image_proc" type="image_proc" ns="camera/rgb"></node> -->
+        <remap from="camera_image"  to="$(arg cam_image_topic)" />
+        <remap from="camera_info"   to="$(arg cam_info_topic)" />
+    </node>
 
     <node name="static_tf_node_desired_camera_frame" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0.4 -1 0 0 0 ar_marker_0 desired_cam_frame"/>
 
-	<include file="$(find arm_vs)/launch/pbvs.launch"/>
+    <include file="$(find arm_vs)/launch/pbvs.launch"/>
 
 </launch>

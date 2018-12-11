@@ -6,6 +6,8 @@
  * point cloud in the region of interest. 
  */
 #include <algorithm>
+#include <vector>
+#include <set>
 
 #include "ros/ros.h"
 #include "pcl_ros/point_cloud.h"
@@ -14,6 +16,12 @@
 
 #include "pcl/point_types.h"
 #include "pcl/filters/extract_indices.h"
+#include "pcl/filters/passthrough.h"
+
+#include "pcl/segmentation/organized_connected_component_segmentation.h"
+#include "pcl/features/integral_image_normal.h"
+#include "pcl/segmentation/organized_multi_plane_segmentation.h"
+#include "pcl/segmentation/euclidean_cluster_comparator.h"
 
 #include "message_filters/subscriber.h"
 #include "message_filters/synchronizer.h"
@@ -41,6 +49,7 @@ class Extraction{
     message_filters::Subscriber<arm_vs::BBox> bbox_sub;
     message_filters::Subscriber<RefPointCloud> pt_sub;
     ros::Publisher extracted_pt_pub;
+    ros::Publisher labeled_cloud_pub;
 
     boost::shared_ptr<Sync> sync;
 
@@ -70,29 +79,32 @@ class Extraction{
      */
     void callback(const arm_vs::BBox::ConstPtr bbox, const RefPointCloud::ConstPtr& points)
     {
+
         RefPointCloud::Ptr extracted_cloud(new RefPointCloud);
         pcl::PointIndices::Ptr extracted_indices(new pcl::PointIndices);
 
         // bouding box top left pixel location and bottom right pixel location
         std::pair<int, int> tl = std::make_pair(bbox->x, bbox->y);
-        std::pair<int, int> br = std::make_pair(bbox->x + bbox->width, bbox->y + bbox->height);
+        std::pair<int, int> br = std::make_pair(bbox->x + bbox->width - 1, bbox->y + bbox->height - 1);
 
         check(&tl, points->width, points->height);
         check(&br, points->width, points->height);
 
         // construct point indices array from points in bounding box
-        std::vector<int> tracked_indices((bbox->width + 1) * (bbox->height + 1));
-
-        for(auto row = 0; row < bbox->height + 1; row++){
+        std::vector<int> tracked_indices(bbox->width * bbox->height);
+        // std::unordered_set<int> tracked_indices(bbox->width * bbox->height);
+        for(auto row = 0; row < bbox->height; row++){
             std::vector<int> inds(
                 boost::counting_iterator<int>(tl.first + (tl.second + row) * points->width), 
                 boost::counting_iterator<int>(br.first + (tl.second + row) * points->width)
             );
-
-            std::copy(inds.begin(), inds.end(), tracked_indices.begin() + row * (bbox->width + 1));
+            std::copy(inds.begin(), inds.end(), tracked_indices.begin() + row * bbox->width);
+            // tracked_indices.insert(inds.begin(), inds.end());
         }
-
+        
         extracted_indices->indices = tracked_indices;
+        // std::vector<int> tracked_indices_v(tracked_indices.begin(), tracked_indices.end());
+        // extracted_indices->indices = tracked_indices_v;
 
         // extract points from input point cloud
         pcl::ExtractIndices<RefPointType> extract;
@@ -116,6 +128,7 @@ class Extraction{
         pt_sub.subscribe(nh, input_pointcloud_topic, 1);
 
         extracted_pt_pub = nh.advertise<RefPointCloud>(output_pointcloud_topic, 1);
+        labeled_cloud_pub = nh.advertise<RefPointCloud>("/labeled", 1);
 
         // setup synchronized subscriber using approximate time sync policy
         sync.reset(new Sync(MySyncPolicy(10), bbox_sub, pt_sub));

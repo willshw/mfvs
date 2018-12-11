@@ -5,6 +5,8 @@
  * Object recognition information helps with reinitializing tracker when tracker operates
  * for too long and start drifting. Also, helps with signaling tracker if object is still
  * in frame in some cases tracker will transfer to other objects when object exits frame. 
+ * 
+ * flowchat_obj_image_recog_track.md illustrates the flow of this node.
  */
 
 #include <vector>
@@ -161,9 +163,6 @@ class TrackerCV {
             }
         }
 
-        /**
-         * FIXME: Need comment or flowchat to explain logic
-         */
         if(roi != nullptr)
         {
             missing_obj_frame_counter = 0;
@@ -234,8 +233,19 @@ class TrackerCV {
             }
         }
         else
-        {
-            TrackerCV::resetTracker();
+        {   
+            arm_vs::BBox bbox_msg_out;
+            bbox_msg_out.header.stamp = img_msg->header.stamp;
+            bbox_msg_out.x = 0;
+            bbox_msg_out.y = 0;
+            bbox_msg_out.width = 0;
+            bbox_msg_out.height = 0;
+            bbox_pub.publish(bbox_msg_out);
+            img_pub.publish(cv_ptr->toImageMsg());
+
+            if(initialized){
+                TrackerCV::resetTracker();
+            }
         }
     }
 

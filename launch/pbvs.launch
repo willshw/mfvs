@@ -6,7 +6,7 @@
     
     <arg name="target_camera_frame"                         default="desired_cam_frame" />
     <arg name="current_camera_frame"                        default="camera_rgb_optical_frame" />
-    <arg name="robot_base_frame"                            default="mico_link_base">
+    <arg name="robot_base_frame"                            default="mico_link_base" />
 
     <arg name="command_ee_cartesian_velocity_topic"         default="/control_input" />
     <arg name="command_ee_cartesian_velocity_topic_hz"      default="50.0" />

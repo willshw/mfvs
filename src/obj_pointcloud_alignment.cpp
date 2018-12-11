@@ -156,18 +156,18 @@ class Alignment{
         align.setInlierFraction (0.30f); // Required inlier fraction for accepting a pose hypothesis
         // align.setMinSampleDistance(0.05f);
 
-        pcl::ScopeTime t("Alignment");
-        align.align (*object_aligned);
+        // pcl::ScopeTime t("Alignment");
+        // align.align (*object_aligned);
 
-        ROS_INFO("Alignment Fitness Score: %f",(float) align.getFitnessScore(2.5f * leaf));
+        // ROS_INFO("Alignment Fitness Score: %f",(float) align.getFitnessScore(2.5f * leaf));
 
-        if(align.hasConverged()){
-            ROS_INFO("Alignment converged");
-            algined_cloud_pub.publish(*object_aligned);
+        // if(align.hasConverged()){
+        //     ROS_INFO("Alignment converged");
+        //     algined_cloud_pub.publish(*object_aligned);
 
-        }else{
-            ROS_INFO("Alignment failed to converge");
-        } 
+        // }else{
+        //     ROS_INFO("Alignment failed to converge");
+        // } 
     }
 
     public:
