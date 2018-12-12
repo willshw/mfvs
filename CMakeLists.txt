@@ -56,9 +56,15 @@ add_message_files(
   BBox.msg
 )
 
+add_service_files(
+  FILES
+  SetObjPtCldTemplate.srv
+)
+
 generate_messages(
   DEPENDENCIES
   std_msgs
+  sensor_msgs
 )
 
 catkin_package(
@@ -81,7 +87,8 @@ target_link_libraries(${PROJECT_NAME}_pbvs
 
 add_dependencies(${PROJECT_NAME}_pbvs
   ${catkin_EXPORTED_TARGETS}
-  arm_vs_generate_messages_cpp
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  # arm_vs_generate_messages_cpp
 )
 
 # node for rgb tracking
@@ -98,7 +105,8 @@ target_link_libraries(${PROJECT_NAME}_obj_image_tracking
 
 add_dependencies(${PROJECT_NAME}_obj_image_tracking
   ${catkin_EXPORTED_TARGETS}
-  arm_vs_generate_messages_cpp
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  # arm_vs_generate_messages_cpp
 )
 
 # node for rgb tracking with object recognition
@@ -195,4 +203,5 @@ target_link_libraries(${PROJECT_NAME}_obj_pointcloud_segmentation
 
 add_dependencies(${PROJECT_NAME}_obj_pointcloud_segmentation
   ${catkin_EXPORTED_TARGETS}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
 )

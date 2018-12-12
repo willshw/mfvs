@@ -15,6 +15,7 @@
 #include "pcl_conversions/pcl_conversions.h"
 
 #include "pcl/point_types.h"
+#include "pcl/common/point_tests.h"
 #include "pcl/filters/extract_indices.h"
 #include "pcl/filters/passthrough.h"
 
@@ -42,7 +43,8 @@ typedef pcl::PointCloud<RefPointType> RefPointCloud;
 typedef message_filters::sync_policies::ApproximateTime<arm_vs::BBox, RefPointCloud> MySyncPolicy;
 typedef message_filters::Synchronizer<MySyncPolicy> Sync;
 
-class Extraction{
+class Extraction
+{
     private:
     ros::NodeHandle nh;
 
@@ -60,13 +62,15 @@ class Extraction{
     /**
      * Get parameters
      */
-    void getParametersValues(){
+    void getParametersValues()
+    {
         nh.param<std::string>("input_pointcloud_topic", input_pointcloud_topic, "/camera/depth/points");
         nh.param<std::string>("input_bbox_topic", input_bbox_topic, "/tracked_object_bbox");
         nh.param<std::string>("output_pointcloud_topic", output_pointcloud_topic, "/tracked_object_pointcloud");
     }
 
-    void check(std::pair<int, int> *p, int width, int height){
+    void check(std::pair<int, int> *p, int width, int height)
+    {
         p->first = std::max(p->first, 0);
         p->first = std::min(p->first, width - 1);
         p->second = std::max(p->second, 0);
@@ -77,44 +81,54 @@ class Extraction{
      * Callback takes in synchronized bounding box message and point cloud message, and extract points in the boudning box
      * region (in x and y), and publishes extracted point cloud.
      */
-    void callback(const arm_vs::BBox::ConstPtr bbox, const RefPointCloud::ConstPtr& points)
+    void callback(const arm_vs::BBox::ConstPtr bbox, const RefPointCloud::ConstPtr& input_cloud)
     {
-
         RefPointCloud::Ptr extracted_cloud(new RefPointCloud);
         pcl::PointIndices::Ptr extracted_indices(new pcl::PointIndices);
+        
+        extracted_indices->header = input_cloud->header;
+
+        // prep the output cloud
+        extracted_cloud->header = input_cloud->header;
+        extracted_cloud->sensor_origin_ = input_cloud->sensor_origin_;
+        extracted_cloud->sensor_orientation_ = input_cloud->sensor_orientation_;
 
         // bouding box top left pixel location and bottom right pixel location
         std::pair<int, int> tl = std::make_pair(bbox->x, bbox->y);
         std::pair<int, int> br = std::make_pair(bbox->x + bbox->width - 1, bbox->y + bbox->height - 1);
 
-        check(&tl, points->width, points->height);
-        check(&br, points->width, points->height);
+        check(&tl, input_cloud->width, input_cloud->height);
+        check(&br, input_cloud->width, input_cloud->height);
+        // ROS_INFO("%d, %d, %d, %d", tl.first, tl.second, br.first, br.second);
 
-        // construct point indices array from points in bounding box
-        std::vector<int> tracked_indices(bbox->width * bbox->height);
-        // std::unordered_set<int> tracked_indices(bbox->width * bbox->height);
-        for(auto row = 0; row < bbox->height; row++){
+        int new_height = br.second - tl.second + 1;
+        // construct point indices array from input_cloud in bounding box
+        std::vector<int> tracked_indices(bbox->width * new_height);
+ 
+        for(auto row = 0; row < new_height; row++)
+        {
             std::vector<int> inds(
-                boost::counting_iterator<int>(tl.first + (tl.second + row) * points->width), 
-                boost::counting_iterator<int>(br.first + (tl.second + row) * points->width)
+                boost::counting_iterator<int>(tl.first + (tl.second + row) * input_cloud->width), 
+                boost::counting_iterator<int>(br.first + (tl.second + row) * input_cloud->width)
             );
+
             std::copy(inds.begin(), inds.end(), tracked_indices.begin() + row * bbox->width);
-            // tracked_indices.insert(inds.begin(), inds.end());
         }
         
         extracted_indices->indices = tracked_indices;
-        // std::vector<int> tracked_indices_v(tracked_indices.begin(), tracked_indices.end());
-        // extracted_indices->indices = tracked_indices_v;
 
         // extract points from input point cloud
         pcl::ExtractIndices<RefPointType> extract;
-        extract.setInputCloud(points);
+        extract.setInputCloud(input_cloud);
         extract.setIndices(extracted_indices);
         extract.setNegative(false);
         extract.filter(*extracted_cloud);
 
+        std::vector<int> indices;
+        pcl::removeNaNFromPointCloud(*extracted_cloud, *extracted_cloud, indices);
+
         // publish extracted points
-        extracted_cloud->header = points->header;
+        extracted_cloud->header = input_cloud->header;
         extracted_pt_pub.publish(*extracted_cloud);
     }
 

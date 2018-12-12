@@ -234,13 +234,13 @@ class TrackerCV {
         }
         else
         {   
-            arm_vs::BBox bbox_msg_out;
-            bbox_msg_out.header.stamp = img_msg->header.stamp;
-            bbox_msg_out.x = 0;
-            bbox_msg_out.y = 0;
-            bbox_msg_out.width = 0;
-            bbox_msg_out.height = 0;
-            bbox_pub.publish(bbox_msg_out);
+            // arm_vs::BBox bbox_msg_out;
+            // bbox_msg_out.header.stamp = img_msg->header.stamp;
+            // bbox_msg_out.x = 0;
+            // bbox_msg_out.y = 0;
+            // bbox_msg_out.width = 1;
+            // bbox_msg_out.height = 1;
+            // bbox_pub.publish(bbox_msg_out);
             img_pub.publish(cv_ptr->toImageMsg());
 
             if(initialized){
@@ -256,10 +256,10 @@ class TrackerCV {
         TrackerCV::getParametersValues();
 
         initialized = false;
-        tracked_frame_counter = tracked_frame_limit;
+        tracked_frame_counter = 0;
         missing_obj_frame_counter = 0;
 
-        bbox = cv::Rect2d(0, 0, 32, 32);
+        bbox = cv::Rect2d(0, 0, 0, 0);
 
         if (tracker_type == "KCF")
             tracker = cv::TrackerKCF::create();

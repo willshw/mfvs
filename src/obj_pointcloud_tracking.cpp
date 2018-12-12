@@ -48,7 +48,8 @@ typedef Cloud::ConstPtr CloudConstPtr;
 
 typedef pcl::tracking::ParticleFilterTracker<RefPointType, ParticleT> ParticleFilter;
 
-class PointcloudTracking{
+class PointcloudTracking
+{
     private:
     ros::NodeHandle nh;
     ros::Subscriber sub;
@@ -67,7 +68,8 @@ class PointcloudTracking{
     boost::shared_ptr<ParticleFilter> tracker_;
     int counter;
 
-    void getParametersValues(){
+    void getParametersValues()
+    {
         nh.param<std::string>("input_pointcloud_topic", input_pointcloud_topic, "/kinect2/qhd/points");
         nh.param<std::string>("output_pointcloud_topic", output_pointcloud_topic, "/matched_cloud");
         nh.param<std::string>("template_cloud_filename", template_cloud_filename, "cloud.pcd");
@@ -75,7 +77,8 @@ class PointcloudTracking{
         nh.param<std::string>("particle_filter_tracker_reset_service", tracker_reset_service, "reset_particle_filter_tracker");
     }
 
-    bool reset_tracker_srv_callback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res){
+    bool reset_tracker_srv_callback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
+    {
 
         tracker_->resetTracking();
         
@@ -87,13 +90,17 @@ class PointcloudTracking{
         return true;
     }
 
-    void pointcloud_sub_callback(const CloudConstPtr& msg_cloud){
-        if(counter < 10){
+    void pointcloud_sub_callback(const CloudConstPtr& msg_cloud)
+    {
+        if(counter < 10)
+        {
             counter++;
-        }else{
-
+        }
+        else if(msg_cloud->points.size() > 0)
+        {
+        
             // Track the object
-            tracker_->setInputCloud (msg_cloud);
+            tracker_->setInputCloud(msg_cloud);
             tracker_->compute ();
 
             ParticleT result = tracker_->getResult ();
