@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="control_hz"                                  default="50.0" />
-    <arg name="control_gain"                                default="1.5" />
+    <arg name="control_hz"                                  default="60.0" />
+    <arg name="control_gain"                                default="1.00" />
     <arg name="control_deadband_error"                      default="0.0002" />
     
     <arg name="target_camera_frame"                         default="desired_cam_frame" />
@@ -9,7 +9,10 @@
     <arg name="robot_base_frame"                            default="mico_link_base" />
 
     <arg name="command_ee_cartesian_velocity_topic"         default="/control_input" />
-    <arg name="command_ee_cartesian_velocity_topic_hz"      default="50.0" />
+    <arg name="command_ee_cartesian_velocity_topic_hz"      default="60.0" />
+
+    <arg name="xyz_vel_limit"                               default="0.18" />
+    <arg name="rpy_vel_limit"                               default="0.18" />
 
     <!-- PBVS Node -->
     <node name="pbvs" pkg="arm_vs" type="arm_vs_pbvs" output="screen">
@@ -19,10 +22,13 @@
 
         <param name="desired_camera_frame"              type="string" value="$(arg target_camera_frame)" />
         <param name="current_camera_frame"              type="string" value="$(arg current_camera_frame)" />
-        <param name="robot_body_frame"                  type="string" value="$(arg robot_base_frame)" />
+        <param name="robot_base_frame"                  type="string" value="$(arg robot_base_frame)" />
 
         <param name="control_input_topic"               type="string" value="$(arg command_ee_cartesian_velocity_topic)" />
         <param name="control_input_topic_hz"            type="string" value="$(arg command_ee_cartesian_velocity_topic_hz)" />
+
+        <arg name="xyz_vel_limit"                       type="double" value="0.18" />
+        <arg name="rpy_vel_limit"                       type="double" value="0.18" />
     </node>
 
 </launch>

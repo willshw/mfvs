@@ -4,6 +4,8 @@
  */
 #include <vector>
 #include <iostream>
+#include <algorithm>
+#include <cmath>
 
 #include "ros/ros.h"
 #include "tf2_ros/buffer.h"
@@ -32,6 +34,7 @@
 #include "geometry_msgs/TransformStamped.h"
 #include "arm_vs/CartVelCmd.h"
 
+#define PI 3.14159265
 
 class VisualServoing{
     private:
@@ -49,12 +52,15 @@ class VisualServoing{
 
         std::string desired_camera_frame;
         std::string current_camera_frame;
-        std::string robot_body_frame;
+        std::string robot_base_frame;
 
         std::string control_input_topic;
         double control_input_topic_hz;
 
         arm_vs::CartVelCmd control_input;
+
+        double xyz_vel_limit;
+        double rpy_vel_limit;
 
     public:
         VisualServoing(ros::NodeHandle node_handle){
@@ -68,14 +74,18 @@ class VisualServoing{
         }
         
         void getParametersValues(){
-            nh.param<double>("pbvs_control_loop_hz", pbvs_control_loop_hz, 50.0);
-            nh.param<double>("pbvs_control_gain_lambda", pbvs_control_law_gain_lambda, 1.0);
+            nh.param<double>("pbvs_control_loop_hz", pbvs_control_loop_hz, 60.0);
+            nh.param<double>("pbvs_control_law_gain_lambda", pbvs_control_law_gain_lambda, 1.0);
             nh.param<double>("pbvs_control_deadband_error", pbvs_control_deadband_error, 0.0001);
+
+            nh.param<double>("control_input_topic_hz", control_input_topic_hz, 60.0);
+            nh.param<double>("xyz_vel_limit", xyz_vel_limit, 0.18);
+            nh.param<double>("rpy_vel_limit", rpy_vel_limit, 0.18);
+
             nh.param<std::string>("desired_camera_frame", desired_camera_frame, "/desired_cam_frame");
             nh.param<std::string>("current_camera_frame", current_camera_frame, "/camera_rgb_optical_frame");
-            nh.param<std::string>("robot_body_frame", robot_body_frame, "/robot_body_frame");
+            nh.param<std::string>("robot_base_frame", robot_base_frame, "robot_base_frame");
             nh.param<std::string>("control_input_topic", control_input_topic, "/control_input");
-            nh.param<double>("control_input_topic_hz", control_input_topic_hz, 60.0);
         }
 
         void getTwistVectorBodyFrame(Eigen::VectorXd& Vb, Eigen::VectorXd Vc, Eigen::Matrix4d bMc){
@@ -105,28 +115,31 @@ class VisualServoing{
             // ROS_INFO("\n%s", ss.str().c_str());
         }
 
-        // void ibvs(){
-        //     vpHomogeneousMatrix cdMo(0.0, 0.0, 0.5, 0.0, 0.0, 0.0); // cdMo is the result of a pose estimation; cd: desired camera frame, o:object frame
+        void fixQuat(double &qx, double &qy, double &qz, double &qw){
+            double norm = sqrt(qx*qx + qy*qy + qz*qz + qw*qw);
+            qx = qx/norm;
+            qy = qy/norm;
+            qz = qz/norm;
+            qw = qw/norm;
 
-        //     vpPoints point[1];
-        //     point[0].setWorldCoordinates(0.0, 0.0, 0.0);
+            if(2*acos(qw) > PI)
+            {
+                qx = -qx;
+                qy = -qy;
+                qz = -qz;
+                qw = -qw;
+            }
+        }
 
-        //     vpServo task;
-        //     task.setServo(vpServo::EYEINHAND_CAMERA);
-        //     task.setInteractionMatrixType(vpServo::CURRENT);
-        //     task.setLambda(0.5);
+        void limitLinVel(double &v){
+            v = std::min(v, xyz_vel_limit);
+            v = std::max(v, -xyz_vel_limit);
+        }
 
-        //     vpFeaturePoint p[1], pd[1];
-        //     point[0].track(cdMo);
-        //     vpFeatureBuilder::create(pd[0], point[0]);
-        //     point[0].track(cMo);
-        //     vpFeatureBuilder::create(p[0], point[0]);
-
-        //     task.addFeature(p[0], pd[0]);
-            
-        //     vpHomogeneousMatrix wMc, wMo;
-
-        // }
+        void limitRotVel(double &w){
+            w = std::min(w, rpy_vel_limit);
+            w = std::max(w, -rpy_vel_limit);
+        }
 
         void pbvs(){
             vpHomogeneousMatrix cdMc; // cdMc is the result of a pose estimation; cd: desired camera frame, c:current camera frame
@@ -153,6 +166,10 @@ class VisualServoing{
             task.setServo(vpServo::EYEINHAND_CAMERA);
             // - Interaction matrix is computed with the current visual features s
             task.setInteractionMatrixType(vpServo::CURRENT);
+
+            // vpAdaptiveGain lambda;
+            // lambda.initStandard(4, 0.4, 30);
+
             // - Set the contant gain to 1
             task.setLambda(pbvs_control_law_gain_lambda);
             // - Add current and desired translation feature
@@ -167,7 +184,7 @@ class VisualServoing{
             while(nh.ok()){
                 try{
                     // lookup desired camera from and current camera frame transform
-                    tf_transform = tf_buffer.lookupTransform(desired_camera_frame, current_camera_frame, ros::Time::now(), ros::Duration(3.0));
+                    tf_transform = tf_buffer.lookupTransform(desired_camera_frame, current_camera_frame, ros::Time::now(), ros::Duration(0.5));
 
                     // convert transform to vpHomogeneousMatrix
                     double t_x = tf_transform.transform.translation.x;
@@ -180,6 +197,7 @@ class VisualServoing{
                     double q_y = tf_transform.transform.rotation.y;
                     double q_z = tf_transform.transform.rotation.z;
                     double q_w = tf_transform.transform.rotation.w;
+                    fixQuat(q_x, q_y, q_z, q_w);
                     vpQuaternionVector quat_vec;
                     quat_vec.buildFrom(q_x, q_y, q_z, q_w);
 
@@ -193,22 +211,24 @@ class VisualServoing{
                     s_tu.buildFrom(cdMc); // Update ThetaU visual feature
                     v = task.computeControlLaw(); // Compute camera velocity skew
                     error = (task.getError()).sumSquare(); // error = s^2 - s_star^2
-        
+
                     // convert twist in camera frame to body frame
                     // rearranging twist from [v w] to [w v]
                     Eigen::VectorXd Vc(6);
                     Vc << v[3], v[4], v[5], v[0], v[1], v[2];
 
-                    std::stringstream ss;
-                    ss.str(std::string());
-                    ss << "v:\n" << Vc << "\n";
-                    ss << "error: " << error << "\n";
-                    ROS_INFO("\n%s", ss.str().c_str());
-
                     // lookup desired camera from and robot body frame transform
                     Eigen::VectorXd Vb(6);
-                    tf_transform = tf_buffer.lookupTransform(current_camera_frame, robot_body_frame, ros::Time::now(), ros::Duration(3.0));
+                    tf_transform = tf_buffer.lookupTransform(robot_base_frame, current_camera_frame, ros::Time::now(), ros::Duration(3.0));
                     getTwistVectorBodyFrame(Vb, Vc, tf2::transformToEigen(tf_transform).matrix());
+
+                    // limit linear and rotational velocity
+                    limitLinVel(Vb[3]);
+                    limitLinVel(Vb[4]);
+                    limitLinVel(Vb[5]);
+                    limitRotVel(Vb[0]);
+                    limitRotVel(Vb[1]);
+                    limitRotVel(Vb[2]);
 
                     // command end effector twist to robot
                     if(error >= pbvs_control_deadband_error){
@@ -220,11 +240,25 @@ class VisualServoing{
                     else{
                         control_input.velocity.data = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
                     }
-                    cart_vel_pub.publish(control_input);
                 }
                 catch(tf2::TransformException ex){
                     ROS_ERROR("%s", ex.what());
+                    control_input.velocity.data = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
                 }
+
+                cart_vel_pub.publish(control_input);
+
+                // std::stringstream ss0;
+                // ss0.str(std::string());
+                // ss0 << "body frame v[v w]:\n";
+                // ss0 << control_input.velocity.data[0] << " \n";
+                // ss0 << control_input.velocity.data[1] << " \n";
+                // ss0 << control_input.velocity.data[2] << " \n";
+                // ss0 << control_input.velocity.data[3] << " \n";
+                // ss0 << control_input.velocity.data[4] << " \n";
+                // ss0 << control_input.velocity.data[5] << " \n";
+                // ss0 << "\n";
+                // ROS_INFO("\n%s", ss0.str().c_str());
 
                 rate.sleep();
             }

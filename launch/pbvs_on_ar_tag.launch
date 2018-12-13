@@ -24,8 +24,15 @@
         <remap from="camera_info"   to="$(arg cam_info_topic)" />
     </node>
 
-    <node name="static_tf_node_desired_camera_frame" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0.4 -1 0 0 0 ar_marker_0 desired_cam_frame"/>
+    <node name="static_tf_node_desired_camera_frame" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0.5 -1 0 0 0 ar_marker_0 desired_cam_frame"/>
 
-    <include file="$(find arm_vs)/launch/pbvs.launch"/>
+    <include file="$(find arm_vs)/launch/pbvs.launch">
+        <arg name="control_hz"                                  value="60.0" />
+        <arg name="command_ee_cartesian_velocity_topic_hz"      value="60.0" />
+        <arg name="control_gain"                                value="0.5" />
+        <arg name="control_deadband_error"                      value="0.0002" />
+        <arg name="xyz_vel_limit"                               value="0.18" />
+        <arg name="rpy_vel_limit"                               value="0.18" />
+    </include>
 
 </launch>
