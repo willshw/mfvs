@@ -138,8 +138,8 @@ class Extraction
 
         Extraction::getParametersValues();
 
-        bbox_sub.subscribe(nh, input_bbox_topic, 1);
-        pt_sub.subscribe(nh, input_pointcloud_topic, 1);
+        bbox_sub.subscribe(nh, input_bbox_topic, 10);
+        pt_sub.subscribe(nh, input_pointcloud_topic, 10);
 
         extracted_pt_pub = nh.advertise<RefPointCloud>(output_pointcloud_topic, 1);
         labeled_cloud_pub = nh.advertise<RefPointCloud>("/labeled", 1);

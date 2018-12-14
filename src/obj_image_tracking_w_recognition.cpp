@@ -14,6 +14,9 @@
 #include <string>
 #include <unordered_set>
 
+#include "tf2_ros/transform_listener.h"
+#include "tf2_ros/transform_broadcaster.h"
+
 #include "ros/ros.h"
 #include "image_transport/image_transport.h"
 #include "cv_bridge/cv_bridge.h"
@@ -52,14 +55,16 @@ namespace cv
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, object_msgs::ObjectsInBoxes> MySyncPolicy;
 typedef message_filters::Synchronizer<MySyncPolicy> Sync;
 
-struct ROIBox{
+struct ROIBox
+{
     int x;
     int y;
     int width;
     int height;
 };
 
-class TrackerCV {
+class TrackerCV
+{
     private:
     ros::NodeHandle nh;
 
@@ -78,15 +83,18 @@ class TrackerCV {
     std::string output_image_topic;
     std::string output_bbox_topic;
 
-    bool initialized; // status indicating if tracker is initialized
+    cv_bridge::CvImagePtr cv_ptr;
+    
+    cv::Ptr<cv::Tracker> tracker;
+    bool trackerInitialized; // status indicating if tracker is initialized
     int tracked_frame_counter;
     int tracked_frame_limit;
     int missing_obj_frame_counter;
     int missing_obj_frame_limit;
+    cv::Rect2d bbox;
 
-    cv::Rect2d bbox; // bounding box for tracked object in image
-    cv_bridge::CvImagePtr cv_ptr;
-    cv::Ptr<cv::Tracker> tracker;
+    bool kalmanInitialized;
+    bool updatedBox;
 
     /**
      * Getting parameters
@@ -115,7 +123,8 @@ class TrackerCV {
      */
     void resetTracker()
     {
-        initialized = false;
+        trackerInitialized = false;
+        kalmanInitialized = false;
         tracked_frame_counter = 0;
 
         tracker.release();
@@ -135,7 +144,7 @@ class TrackerCV {
      * and publish the bounding box as customized msg BBox.
      */
     void SyncImgObjInfCallback (const sensor_msgs::ImageConstPtr& img_msg, const object_msgs::ObjectsInBoxes::ConstPtr& obj_inf_boxes)
-    {   
+    {
         try
         {
             cv_ptr = cv_bridge::toCvCopy(img_msg, sensor_msgs::image_encodings::BGR8);
@@ -179,14 +188,15 @@ class TrackerCV {
 
         if(missing_obj_frame_counter < missing_obj_frame_limit){
 
-            if(!initialized)
+            if(!trackerInitialized && roi != nullptr)
             {
                 // Display bounding box.
                 bbox = cv::Rect2d(roi->x, roi->y, roi->width, roi->height);
                 cv::rectangle(cv_ptr->image, bbox, cv::Scalar( 255, 0, 0 ), 2, 1 );
 
                 tracker->init(cv_ptr->image, bbox);
-                initialized = true;
+                trackerInitialized = true;
+                kalmanInitialized = true;
             }
             else
             {
@@ -196,15 +206,16 @@ class TrackerCV {
                 // Update the tracking result
                 bool ok = tracker->update(cv_ptr->image, bbox);
                 tracked_frame_counter++;
+                updatedBox = true;
 
                 // Assemble output bounding box message
-                arm_vs::BBox bbox_msg_out;
-                bbox_msg_out.header.stamp = img_msg->header.stamp;
-                bbox_msg_out.x = static_cast<uint>(bbox.x);
-                bbox_msg_out.y = static_cast<uint>(bbox.y);
-                bbox_msg_out.width = static_cast<uint>(bbox.width);
-                bbox_msg_out.height = static_cast<uint>(bbox.height);
-                bbox_pub.publish(bbox_msg_out);
+                // arm_vs::BBox bbox_msg_out;
+                // bbox_msg_out.header.stamp = img_msg->header.stamp;
+                // bbox_msg_out.x = static_cast<uint>(bbox.x);
+                // bbox_msg_out.y = static_cast<uint>(bbox.y);
+                // bbox_msg_out.width = static_cast<uint>(bbox.width);
+                // bbox_msg_out.height = static_cast<uint>(bbox.height);
+                // bbox_pub.publish(bbox_msg_out);
                 
                 // Calculate Frames per second (FPS)
                 float fps = cv::getTickFrequency() / ((double)cv::getTickCount() - timer);
@@ -234,16 +245,9 @@ class TrackerCV {
         }
         else
         {   
-            // arm_vs::BBox bbox_msg_out;
-            // bbox_msg_out.header.stamp = img_msg->header.stamp;
-            // bbox_msg_out.x = 0;
-            // bbox_msg_out.y = 0;
-            // bbox_msg_out.width = 1;
-            // bbox_msg_out.height = 1;
-            // bbox_pub.publish(bbox_msg_out);
             img_pub.publish(cv_ptr->toImageMsg());
 
-            if(initialized){
+            if(trackerInitialized){
                 TrackerCV::resetTracker();
             }
         }
@@ -255,11 +259,10 @@ class TrackerCV {
         nh = node_handle;
         TrackerCV::getParametersValues();
 
-        initialized = false;
+        trackerInitialized = false;
         tracked_frame_counter = 0;
         missing_obj_frame_counter = 0;
-
-        bbox = cv::Rect2d(0, 0, 0, 0);
+        bbox = cv::Rect2d(0, 0, 0, 0); // bounding box for tracked object in image
 
         if (tracker_type == "KCF")
             tracker = cv::TrackerKCF::create();
@@ -270,6 +273,62 @@ class TrackerCV {
         if (tracker_type == "GOTURN")
             tracker = cv::TrackerGOTURN::create();
 
+        // Kalman Filter
+        arm_vs::BBox bbox_msg_out;
+        updatedBox = false;
+        double ticks = 0.0;
+        double precTick = ticks;
+        double dT = 0.0;
+
+        bool kalmanInitialized = false;
+        int stateSize = 6;
+        int measSize = 4;
+        int controlSize = 0;
+        unsigned int type = CV_32F;
+
+        cv::Mat state(stateSize, 1, type);  // [x,y,v_x,v_y,w,h]
+        cv::Mat meas(measSize, 1, type);    // [z_x,z_y,z_w,z_h]
+
+        cv::KalmanFilter kf(stateSize, measSize, controlSize, type);
+        // Transition State Matrix A
+        // Note: set dT at each processing step!
+        // [ 1 0 dT 0  0 0 ]
+        // [ 0 1 0  dT 0 0 ]
+        // [ 0 0 1  0  0 0 ]
+        // [ 0 0 0  1  0 0 ]
+        // [ 0 0 0  0  1 0 ]
+        // [ 0 0 0  0  0 1 ]
+        cv::setIdentity(kf.transitionMatrix);
+
+        // Measure Matrix H
+        // [ 1 0 0 0 0 0 ]
+        // [ 0 1 0 0 0 0 ]
+        // [ 0 0 0 0 1 0 ]
+        // [ 0 0 0 0 0 1 ]
+        kf.measurementMatrix = cv::Mat::zeros(measSize, stateSize, type);
+        kf.measurementMatrix.at<float>(0) = 1.0f;
+        kf.measurementMatrix.at<float>(7) = 1.0f;
+        kf.measurementMatrix.at<float>(16) = 1.0f;
+        kf.measurementMatrix.at<float>(23) = 1.0f;
+
+        // Process Noise Covariance Matrix Q
+        // [ Ex   0   0     0     0    0  ]
+        // [ 0    Ey  0     0     0    0  ]
+        // [ 0    0   Ev_x  0     0    0  ]
+        // [ 0    0   0     Ev_y  0    0  ]
+        // [ 0    0   0     0     Ew   0  ]
+        // [ 0    0   0     0     0    Eh ]
+        cv::setIdentity(kf.processNoiseCov, cv::Scalar(1e-2));
+        // kf.processNoiseCov.at<float>(0) = 1e-2;
+        // kf.processNoiseCov.at<float>(7) = 1e-2;
+        // kf.processNoiseCov.at<float>(14) = 5.0f;
+        // kf.processNoiseCov.at<float>(21) = 5.0f;
+        // kf.processNoiseCov.at<float>(28) = 1e-2;
+        // kf.processNoiseCov.at<float>(35) = 1e-2;
+        
+        // Measures Noise Covariance Matrix R
+        cv::setIdentity(kf.measurementNoiseCov, cv::Scalar(1e-1));
+
         image_sub.subscribe(nh, input_image_topic, 10);
         obj_inf_sub.subscribe(nh, input_obj_inf_topic, 10);
 
@@ -277,7 +336,70 @@ class TrackerCV {
         sync->registerCallback(boost::bind(&TrackerCV::SyncImgObjInfCallback, this, _1, _2));
 
         img_pub = img_trans.advertise(output_image_topic, 1);
-        bbox_pub = nh.advertise<arm_vs::BBox>(output_bbox_topic, 60);
+        bbox_pub = nh.advertise<arm_vs::BBox>(output_bbox_topic, 1);
+        
+        // use kalman filter to predict motion between detection and tracking frames to alleviate low bounding box
+        ros::Rate r(30); // 30 hz
+        while(ros::ok())
+        {
+            
+            precTick = ticks;
+            ticks = (double) cv::getTickCount();
+            dT = (ticks - precTick) / cv::getTickFrequency(); //seconds
+            
+            if(kalmanInitialized)
+            {
+                // update time changed in state transistion matrix
+                kf.transitionMatrix.at<float>(2) = dT;
+                kf.transitionMatrix.at<float>(9) = dT;
+
+                state = kf.predict();
+
+                bbox_msg_out.header.stamp = ros::Time::now();
+                bbox_msg_out.x = static_cast<uint>(state.at<float>(0));
+                bbox_msg_out.y = static_cast<uint>(state.at<float>(1));
+                bbox_msg_out.width = static_cast<uint>(state.at<float>(4));
+                bbox_msg_out.height = static_cast<uint>(state.at<float>(5));
+                bbox_pub.publish(bbox_msg_out);
+            }
+
+            if(updatedBox)
+            {
+                updatedBox = false;
+
+                meas.at<float>(0) = (float)bbox.x;
+                meas.at<float>(1) = (float)bbox.y;
+                meas.at<float>(2) = (float)bbox.width;
+                meas.at<float>(3) = (float)bbox.height;
+
+                if(!kalmanInitialized){
+                    kf.errorCovPre.at<float>(0) = 1; // px
+                    kf.errorCovPre.at<float>(7) = 1; // px
+                    kf.errorCovPre.at<float>(14) = 1;
+                    kf.errorCovPre.at<float>(21) = 1;
+                    kf.errorCovPre.at<float>(28) = 1; // px
+                    kf.errorCovPre.at<float>(35) = 1; // px
+
+                    state.at<float>(0) = meas.at<float>(0);
+                    state.at<float>(1) = meas.at<float>(1);
+                    state.at<float>(2) = 0;
+                    state.at<float>(3) = 0;
+                    state.at<float>(4) = meas.at<float>(2);
+                    state.at<float>(5) = meas.at<float>(3);
+
+                    kf.statePost = state;
+
+                    kalmanInitialized = true;
+                }
+            }
+            else
+            {
+                kf.correct(meas);
+            }
+            
+            ros::spinOnce();
+            r.sleep();
+        }
     }
 };
 
@@ -287,6 +409,6 @@ int main (int argc, char** argv)
     ros::NodeHandle nh ("~");
     TrackerCV tracker (nh);
 
-    ros::spin();
+    // ros::spin();
     return 0;
 }

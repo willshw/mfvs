@@ -50,12 +50,12 @@
     <!-- Launch Node and Nodelets -->
 
     <node pkg="tf2_ros" type="static_transform_publisher" name="camera_to_hand" 
-        args="-0.018698748766003873 0.0626711617428399 -0.10146977507749246
-                -0.4657368475084049 0.5462870935887247 0.4559336784175306 0.5261027286908676 
+        args="-0.0187845171388 0.0629403083384 -0.0936029139899
+                -0.5111042314 0.499085936412 0.50680045647 0.482533926313 
                 mico_link_hand $(arg camera)_link" />
 
     <node pkg="tf2_ros" type="static_transform_publisher" name="desired_camera_pose" 
-        args="0 0 -0.15 0 0 0 1 particle_filter_tracked_template_frame desired_camera_pose" />
+        args="0 0 -0.4 0 0 0 1 particle_filter_tracked_template_frame desired_camera_pose" />
 
     <!-- Realsense camera launcher -->
     <include file="$(find realsense2_camera)/launch/rs_rgbd.launch"> 
@@ -89,7 +89,7 @@
                 filter_limit_min: 0.01
                 filter_limit_max: 1.5
                 filter_limit_negative: False
-                leaf_size: 0.003
+                leaf_size: 0.005
             </rosparam>
         </node>
 
