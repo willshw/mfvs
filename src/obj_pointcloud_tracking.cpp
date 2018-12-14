@@ -4,10 +4,12 @@
  */
 
 #include <ros/ros.h>
-#include <pcl_ros/point_cloud.h>
+
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_eigen/tf2_eigen.h>
+
+#include <pcl_ros/point_cloud.h>
 
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
@@ -18,11 +20,9 @@
 #include <pcl/common/transforms.h>
 
 #include <pcl/tracking/tracking.h>
-
 #include <pcl/tracking/particle_filter.h>
 #include <pcl/tracking/kld_adaptive_particle_filter_omp.h>
 #include <pcl/tracking/particle_filter_omp.h>
-
 #include <pcl/tracking/coherence.h>
 #include <pcl/tracking/distance_coherence.h>
 #include <pcl/tracking/hsv_color_coherence.h>
@@ -33,8 +33,8 @@
 #include <boost/format.hpp>
 
 // msgs
-#include "sensor_msgs/PointCloud2.h"
-#include "geometry_msgs/TransformStamped.h"
+#include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/TransformStamped.h>
 
 // srv
 #include "std_srvs/Trigger.h"
@@ -133,7 +133,6 @@ class PointcloudTracking
     public:
     PointcloudTracking(ros::NodeHandle node_handle){
         nh = node_handle;
-
         PointcloudTracking::getParametersValues();
 
         template_cloud.reset(new Cloud());

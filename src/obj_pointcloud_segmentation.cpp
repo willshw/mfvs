@@ -1,26 +1,25 @@
 #include <iostream>
 #include <vector>
-#include "ros/ros.h"
+#include <ros/ros.h>
 
-#include "pcl_conversions/pcl_conversions.h"
-#include "pcl_ros/point_cloud.h"
-#include "pcl/point_types.h"
-
-#include "pcl/features/integral_image_normal.h"
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/features/integral_image_normal.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
-#include "pcl/segmentation/organized_connected_component_segmentation.h"
-#include "pcl/segmentation/organized_multi_plane_segmentation.h"
-#include "pcl/segmentation/euclidean_cluster_comparator.h"
+#include <pcl/segmentation/organized_connected_component_segmentation.h>
+#include <pcl/segmentation/organized_multi_plane_segmentation.h>
+#include <pcl/segmentation/euclidean_cluster_comparator.h>
 
 // Boost
-#include "boost/thread/thread.hpp"
+#include <boost/thread/thread.hpp>
 
 // msgs
-#include "sensor_msgs/PointCloud2.h"
+#include <sensor_msgs/PointCloud2.h>
 
-//srv
+// srv
 #include "arm_vs/SetObjPtCldTemplate.h"
 
 typedef pcl::PointXYZRGB RefPointType;

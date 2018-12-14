@@ -2,45 +2,16 @@
  * This node subscribe to point cloud topic and save the point cloud data to pcd file.
  * pointcloud_to_pcd in pcl_ros only saves the XYZ pointcloud; RGB info can be saved using this node
  */
-
-#include "ros/ros.h"
-#include "pcl_ros/point_cloud.h"
-
-#include "pcl/point_types.h"
-#include "pcl/io/pcd_io.h"
-
-// msgs
-#include "sensor_msgs/PointCloud2.h"
-
-
 #include <vector>
-#include <pcl/point_cloud.h>
+
+#include <ros/ros.h>
+
+#include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
-#include <pcl/search/search.h>
-#include <pcl/search/kdtree.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/visualization/cloud_viewer.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/segmentation/region_growing.h>
-#include <pcl/segmentation/organized_connected_component_segmentation.h>
-#include <pcl/segmentation/extract_polygonal_prism_data.h>
-#include <pcl/surface/convex_hull.h>
 
-
-// Boost
-#include <boost/thread/thread.hpp>
-// PCL
-
-#include <pcl/features/integral_image_normal.h>
-#include <pcl/segmentation/organized_multi_plane_segmentation.h>
-#include <pcl/segmentation/planar_polygon_fusion.h>
-#include <pcl/common/transforms.h>
-#include <pcl/segmentation/plane_coefficient_comparator.h>
-#include <pcl/segmentation/euclidean_plane_coefficient_comparator.h>
-#include <pcl/segmentation/rgb_plane_coefficient_comparator.h>
-#include <pcl/segmentation/edge_aware_plane_comparator.h>
-#include <pcl/segmentation/euclidean_cluster_comparator.h>
+// msgs
+#include <sensor_msgs/PointCloud2.h>
 
 typedef pcl::PointXYZRGB RefPointType;
 typedef pcl::PointCloud<RefPointType> Cloud;

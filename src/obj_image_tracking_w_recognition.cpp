@@ -14,31 +14,32 @@
 #include <string>
 #include <unordered_set>
 
-#include "tf2_ros/transform_listener.h"
-#include "tf2_ros/transform_broadcaster.h"
+#include <ros/ros.h>
 
-#include "ros/ros.h"
-#include "image_transport/image_transport.h"
-#include "cv_bridge/cv_bridge.h"
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
 
-#include "opencv2/opencv.hpp"
-#include "opencv2/tracking/tracker.hpp"
-#include "opencv2/tracking.hpp"
-#include "opencv2/core/ocl.hpp"
+#include <opencv2/opencv.hpp>
+#include <opencv2/tracking/tracker.hpp>
+#include <opencv2/tracking.hpp>
+#include <opencv2/core/ocl.hpp>
 
-#include "message_filters/subscriber.h"
-#include "message_filters/synchronizer.h"
-#include "message_filters/sync_policies/approximate_time.h"
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
 
-#include "boost/shared_ptr.hpp"
-#include "boost/bind.hpp"
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
 
 // msgs
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/RegionOfInterest.h>
+#include <object_msgs/ObjectInBox.h>
+#include <object_msgs/ObjectsInBoxes.h>
 #include "arm_vs/BBox.h"
-#include "sensor_msgs/Image.h"
-#include "sensor_msgs/RegionOfInterest.h"
-#include "object_msgs/ObjectInBox.h"
-#include "object_msgs/ObjectsInBoxes.h"
 
 /**
  * FIXME: workaround to CMake unable to find the correct OpenCV directory

@@ -4,13 +4,11 @@
     <arg name="marker_id" default="566" doc="The ID of the ArUco marker used" />
     <arg name="corner_refinement" default="LINES" />
 
+    <!-- start camera -->
     <include file="$(find realsense2_camera)/launch/rs_rgbd.launch" />
+    
+    <!-- start robot -->
     <include file="$(find mico_interaction)/launch/mico_moveit_network.launch" />
-
-    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="camera_to_hand" 
-        args="-0.0187845171388 0.0629403083384 -0.0936029139899
-                -0.5111042314 0.499085936412 0.50680045647 0.482533926313 
-                mico_link_hand camera_link" /> -->
 
     <!-- start ArUco -->
     <node name="aruco_tracker" pkg="aruco_ros" type="single">

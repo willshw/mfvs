@@ -1,35 +1,30 @@
 /**
  * This node takes in alignment from particle filter and refine it with ICP
 */
-#include "ros/ros.h"
-#include "pcl_ros/point_cloud.h"
-#include "tf2_ros/transform_broadcaster.h"
-#include "tf2_eigen/tf2_eigen.h"
+#include <vector>
+#include <Eigen/Core>
 
-#include "vector"
-#include "Eigen/Core"
+#include <ros/ros.h>
+#include <pcl_ros/point_cloud.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_eigen/tf2_eigen.h>
 
-#include "pcl/point_types.h"
-#include "pcl/common/time.h"
+#include <pcl/point_types.h>
+#include <pcl/common/time.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/features/normal_3d_omp.h>
+#include <pcl/features/fpfh_omp.h>
+#include <pcl/registration/icp.h>
+#include <pcl/registration/ia_ransac.h>
+#include <pcl/registration/sample_consensus_prerejective.h>
+#include <pcl/segmentation/sac_segmentation.h>
 
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
 
-#include "pcl/kdtree/kdtree_flann.h"
-
-#include "pcl/features/normal_3d_omp.h"
-#include "pcl/features/fpfh_omp.h"
-
-#include "pcl/registration/icp.h"
-#include "pcl/registration/ia_ransac.h"
-#include "pcl/registration/sample_consensus_prerejective.h"
-
-#include "pcl/segmentation/sac_segmentation.h"
-
-#include "message_filters/subscriber.h"
-#include "message_filters/synchronizer.h"
-#include "message_filters/sync_policies/approximate_time.h"
-
-#include "boost/shared_ptr.hpp"
-#include "boost/bind.hpp"
+#include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
 
 typedef pcl::PointXYZRGB RefPointType;
 
@@ -58,7 +53,7 @@ class Alignment{
     std::string output_pointcloud_topic;
     std::string child_frame_id;
 
-    pcl::NormalEstimation<RefPointType, pcl::PointNormal> normal_est;
+    pcl::NormalEstimationOMP<RefPointType, pcl::PointNormal> normal_est;
     FeatureEstimation feature_est;
     pcl::SampleConsensusPrerejective<RefPointType, RefPointType, pcl::FPFHSignature33> align;
     // pcl::SampleConsensusInitialAlignment<pcl::PointXYZ, pcl::PointXYZ, pcl::FPFHSignature33> align;
@@ -121,15 +116,15 @@ class Alignment{
 
         // SearchMethod::Ptr search_method (new SearchMethod);
 
+        normal_est.setRadiusSearch(0.01);
         normal_est.setInputCloud (scene_cloud);
         // normal_est.setSearchMethod(search_method);
-        // normal_est.setRadiusSearch(0.02f);
         normal_est.compute (*scene);
 
+        feature_est.setRadiusSearch(0.025);
         feature_est.setInputCloud (scene_cloud);
         feature_est.setInputNormals (scene);
         // feature_est.setSearchMethod(search_method);
-        // feature_est.setRadiusSearch(0.02f);
         feature_est.compute (*scene_features);
 
         normal_est.setInputCloud (template_cloud);
@@ -149,8 +144,8 @@ class Alignment{
         align.setTargetFeatures (scene_features);
 
         align.setMaximumIterations (50000); // Number of RANSAC iterations
-        align.setNumberOfSamples (5); // Number of points to sample for generating/prerejecting a pose
-        align.setCorrespondenceRandomness (7); // Number of nearest features to use
+        align.setNumberOfSamples (3); // Number of points to sample for generating/prerejecting a pose
+        align.setCorrespondenceRandomness (5); // Number of nearest features to use
         align.setSimilarityThreshold (0.9f); // Polygonal edge length similarity threshold
         align.setMaxCorrespondenceDistance (2.5f * leaf); // Inlier threshold
         align.setInlierFraction (0.30f); // Required inlier fraction for accepting a pose hypothesis
@@ -173,14 +168,13 @@ class Alignment{
     public:
     Alignment(ros::NodeHandle node_handle){
         nh = node_handle;
-
         Alignment::getParametersValues();
 
         template_cloud_sub.subscribe(nh, input_template_pointcloud_topic, 10);
         scene_cloud_sub.subscribe(nh, input_scene_pointcloud_topic, 10);
 
         sync.reset(new Sync(MySyncPolicy(10), template_cloud_sub, scene_cloud_sub));
-        sync->registerCallback(boost::bind(&Alignment::callback_icp, this, _1, _2));
+        sync->registerCallback(boost::bind(&Alignment::callback_FPFH, this, _1, _2));
     
         algined_cloud_pub = nh.advertise<PointCloud>(output_pointcloud_topic, 1);
 

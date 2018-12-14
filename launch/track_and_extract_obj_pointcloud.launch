@@ -26,6 +26,13 @@
         <param name="output_bbox_topic"         type="string" value="$(arg tracker_bbox_topic)" />
     </node>
 
+    <!-- <node name="object_image_tracking" pkg="arm_vs" type="arm_vs_obj_image_tracking" output="screen" >
+        <param name="input_image_topic"         type="string" value="$(arg tracker_image_source_topic)" />
+        <param name="tracker_type"              type="string" value="$(arg tracker_type)" />
+        <param name="output_image_topic"        type="string" value="$(arg tracker_image_output_topic)" />
+        <param name="output_bbox_topic"         type="string" value="$(arg tracker_bbox_topic)" />
+    </node> -->
+
     <!-- Point cloud extractor -->
     <node name="object_pointcloud_extractor" pkg="arm_vs" type="arm_vs_obj_pointcloud_extraction" output="screen" >
         <param name="input_pointcloud_topic"    type="string" value="$(arg extractor_input_point_cloud_topic)" />
