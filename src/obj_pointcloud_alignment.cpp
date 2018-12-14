@@ -19,57 +19,33 @@
 #include <pcl/registration/sample_consensus_prerejective.h>
 #include <pcl/segmentation/sac_segmentation.h>
 
-#include <message_filters/subscriber.h>
-#include <message_filters/synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/bind.hpp>
-
 typedef pcl::PointXYZRGB RefPointType;
-
 typedef pcl::PointCloud<RefPointType> PointCloud;
-typedef pcl::PointCloud<pcl::PointNormal> PointCloud_Normal;
-typedef pcl::PointCloud<pcl::FPFHSignature33> PointCloud_Feature;
-
-typedef pcl::FPFHEstimationOMP<RefPointType, pcl::PointNormal, pcl::FPFHSignature33> FeatureEstimation;
-
-typedef pcl::search::KdTree<RefPointType> SearchMethod;
-
-typedef message_filters::sync_policies::ApproximateTime<PointCloud, PointCloud> MySyncPolicy;
-typedef message_filters::Synchronizer<MySyncPolicy> Sync;
+typedef PointCloud::Ptr PointCloudPtr;
 
 class Alignment{
     private:
     ros::NodeHandle nh;
-    message_filters::Subscriber<PointCloud> template_cloud_sub;
-    message_filters::Subscriber<PointCloud> scene_cloud_sub;
-    ros::Publisher algined_cloud_pub;
-    boost::shared_ptr<Sync> sync;
+    ros::Subscriber sub;
+    ros::Publisher pub;
 
     // parameters
-    std::string input_template_pointcloud_topic;
-    std::string input_scene_pointcloud_topic;
+    std::string input_pointcloud_topic;
     std::string output_pointcloud_topic;
+    std::string template_cloud_filename;
     std::string child_frame_id;
 
-    pcl::NormalEstimationOMP<RefPointType, pcl::PointNormal> normal_est;
-    FeatureEstimation feature_est;
-    pcl::SampleConsensusPrerejective<RefPointType, RefPointType, pcl::FPFHSignature33> align;
-    // pcl::SampleConsensusInitialAlignment<pcl::PointXYZ, pcl::PointXYZ, pcl::FPFHSignature33> align;
-
     pcl::IterativeClosestPoint<RefPointType, RefPointType> icp;
-
-    const float leaf = 0.005f;
+    PointCloudPtr template_cloud;
 
     void getParametersValues(){
-        nh.param<std::string>("input_template_pointcloud_topic", input_template_pointcloud_topic, "/camera/depth/points");
-        nh.param<std::string>("input_scene_pointcloud_topic", input_scene_pointcloud_topic, "/tracked_object_points_indices");
-        nh.param<std::string>("output_pointcloud_topic", output_pointcloud_topic, "/tracked_object_pointcloud");
+        nh.param<std::string>("input_pointcloud_topic", input_pointcloud_topic, "/kinect2/qhd/points");
+        nh.param<std::string>("output_pointcloud_topic", output_pointcloud_topic, "/matched_cloud");
+        nh.param<std::string>("template_cloud_filename", template_cloud_filename, "cloud.pcd");
         nh.param<std::string>("icp_alignment_frame", child_frame_id, "icp_alignment_frame");
     }
 
-    void callback_icp(const PointCloud::ConstPtr& template_cloud, const PointCloud::ConstPtr& scene_cloud){
+    void callback_icp(const PointCloud::ConstPtr& scene_cloud){
         icp.setInputSource(template_cloud);
         icp.setInputTarget(scene_cloud);
 
@@ -98,88 +74,30 @@ class Alignment{
             static tf2_ros::TransformBroadcaster br;
             br.sendTransform(transformation_stamped);
 
-            algined_cloud_pub.publish(*object_aligned);
+            object_aligned->header.frame_id = scene_cloud->header.frame_id;
+            pub.publish(*object_aligned);
 
         }else{
             ROS_INFO("Alignment failed to converge");
         } 
     }
 
-    void callback_FPFH(const PointCloud::ConstPtr& template_cloud, const PointCloud::ConstPtr& scene_cloud){
-        PointCloud_Normal::Ptr scene (new PointCloud_Normal);
-        PointCloud_Normal::Ptr object (new PointCloud_Normal);
-
-        PointCloud_Feature::Ptr scene_features (new PointCloud_Feature);
-        PointCloud_Feature::Ptr object_features (new PointCloud_Feature);
-
-        PointCloud::Ptr object_aligned (new PointCloud);
-
-        // SearchMethod::Ptr search_method (new SearchMethod);
-
-        normal_est.setRadiusSearch(0.01);
-        normal_est.setInputCloud (scene_cloud);
-        // normal_est.setSearchMethod(search_method);
-        normal_est.compute (*scene);
-
-        feature_est.setRadiusSearch(0.025);
-        feature_est.setInputCloud (scene_cloud);
-        feature_est.setInputNormals (scene);
-        // feature_est.setSearchMethod(search_method);
-        feature_est.compute (*scene_features);
-
-        normal_est.setInputCloud (template_cloud);
-        // normal_est.setSearchMethod(search_method);
-        // normal_est.setRadiusSearch(0.02f);
-        normal_est.compute (*object);
-
-        feature_est.setInputCloud (template_cloud);
-        feature_est.setInputNormals (object);
-        // feature_est.setSearchMethod(search_method);
-        // feature_est.setRadiusSearch(0.02f);
-        feature_est.compute (*object_features);
-
-        align.setInputSource (template_cloud);
-        align.setSourceFeatures (object_features);
-        align.setInputTarget (scene_cloud);
-        align.setTargetFeatures (scene_features);
-
-        align.setMaximumIterations (50000); // Number of RANSAC iterations
-        align.setNumberOfSamples (3); // Number of points to sample for generating/prerejecting a pose
-        align.setCorrespondenceRandomness (5); // Number of nearest features to use
-        align.setSimilarityThreshold (0.9f); // Polygonal edge length similarity threshold
-        align.setMaxCorrespondenceDistance (2.5f * leaf); // Inlier threshold
-        align.setInlierFraction (0.30f); // Required inlier fraction for accepting a pose hypothesis
-        // align.setMinSampleDistance(0.05f);
-
-        // pcl::ScopeTime t("Alignment");
-        // align.align (*object_aligned);
-
-        // ROS_INFO("Alignment Fitness Score: %f",(float) align.getFitnessScore(2.5f * leaf));
-
-        // if(align.hasConverged()){
-        //     ROS_INFO("Alignment converged");
-        //     algined_cloud_pub.publish(*object_aligned);
-
-        // }else{
-        //     ROS_INFO("Alignment failed to converge");
-        // } 
-    }
-
     public:
     Alignment(ros::NodeHandle node_handle){
         nh = node_handle;
         Alignment::getParametersValues();
+        
+        template_cloud.reset(new PointCloud());
+        if(pcl::io::loadPCDFile(template_cloud_filename, *template_cloud) == -1){
+            ROS_FATAL("Target cloud pcd file not found!");
+        }
+        else{
+            ROS_INFO("Target cloud pcd file: %s successfully loaded!", template_cloud_filename.c_str());
+        }
 
-        template_cloud_sub.subscribe(nh, input_template_pointcloud_topic, 10);
-        scene_cloud_sub.subscribe(nh, input_scene_pointcloud_topic, 10);
-
-        sync.reset(new Sync(MySyncPolicy(10), template_cloud_sub, scene_cloud_sub));
-        sync->registerCallback(boost::bind(&Alignment::callback_FPFH, this, _1, _2));
-    
-        algined_cloud_pub = nh.advertise<PointCloud>(output_pointcloud_topic, 1);
-
-        normal_est.setRadiusSearch(0.01);
-        feature_est.setRadiusSearch(0.025);
+        // initialize subscribers, publishers and services
+        sub = nh.subscribe<PointCloud>(input_pointcloud_topic, 1, &Alignment::callback_icp, this);
+        pub = nh.advertise<PointCloud>(output_pointcloud_topic, 1);
     }
 
 };

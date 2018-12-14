@@ -49,7 +49,6 @@ class Extraction
     message_filters::Subscriber<arm_vs::BBox> bbox_sub;
     message_filters::Subscriber<RefPointCloud> pt_sub;
     ros::Publisher extracted_pt_pub;
-    ros::Publisher labeled_cloud_pub;
 
     boost::shared_ptr<Sync> sync;
 
@@ -123,9 +122,6 @@ class Extraction
         extract.setNegative(false);
         extract.filter(*extracted_cloud);
 
-        // std::vector<int> indices;
-        // pcl::removeNaNFromPointCloud(*extracted_cloud, *extracted_cloud, indices);
-
         // publish extracted points
         extracted_cloud->header = input_cloud->header;
         extracted_pt_pub.publish(*extracted_cloud);
@@ -137,16 +133,14 @@ class Extraction
 
         Extraction::getParametersValues();
 
-        bbox_sub.subscribe(nh, input_bbox_topic, 10);
-        pt_sub.subscribe(nh, input_pointcloud_topic, 10);
+        bbox_sub.subscribe(nh, input_bbox_topic, 60);
+        pt_sub.subscribe(nh, input_pointcloud_topic, 60);
 
         extracted_pt_pub = nh.advertise<RefPointCloud>(output_pointcloud_topic, 1);
-        labeled_cloud_pub = nh.advertise<RefPointCloud>("/labeled", 1);
 
         // setup synchronized subscriber using approximate time sync policy
-        sync.reset(new Sync(MySyncPolicy(10), bbox_sub, pt_sub));
+        sync.reset(new Sync(MySyncPolicy(60), bbox_sub, pt_sub));
         sync->registerCallback(boost::bind(&Extraction::callback, this, _1, _2));
-
     }
 
 };

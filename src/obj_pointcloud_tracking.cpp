@@ -146,7 +146,7 @@ class PointcloudTracking
         counter = 0;
 
         // Set tracker parameters
-        std::vector<double> default_step_covariance = std::vector<double> (6, 0.010 * 0.010);
+        std::vector<double> default_step_covariance = std::vector<double> (6, 0.015 * 0.015);
         default_step_covariance[3] *= 40.0;
         default_step_covariance[4] *= 40.0;
         default_step_covariance[5] *= 40.0;

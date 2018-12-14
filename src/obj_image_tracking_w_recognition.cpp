@@ -330,10 +330,10 @@ class TrackerCV
         // Measures Noise Covariance Matrix R
         cv::setIdentity(kf.measurementNoiseCov, cv::Scalar(1e-1));
 
-        image_sub.subscribe(nh, input_image_topic, 10);
-        obj_inf_sub.subscribe(nh, input_obj_inf_topic, 10);
+        image_sub.subscribe(nh, input_image_topic, 60);
+        obj_inf_sub.subscribe(nh, input_obj_inf_topic, 60);
 
-        sync.reset(new Sync(MySyncPolicy(10), image_sub, obj_inf_sub));
+        sync.reset(new Sync(MySyncPolicy(60), image_sub, obj_inf_sub));
         sync->registerCallback(boost::bind(&TrackerCV::SyncImgObjInfCallback, this, _1, _2));
 
         img_pub = img_trans.advertise(output_image_topic, 1);
@@ -351,8 +351,8 @@ class TrackerCV
             if(kalmanInitialized)
             {
                 // update time changed in state transistion matrix
-                kf.transitionMatrix.at<float>(2) = dT;
-                kf.transitionMatrix.at<float>(9) = dT;
+                kf.transitionMatrix.at<float>(2) = dT*4.0;
+                kf.transitionMatrix.at<float>(9) = dT*4.0;
 
                 state = kf.predict();
 
