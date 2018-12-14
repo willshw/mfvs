@@ -7,24 +7,22 @@
 #include <algorithm>
 #include <cmath>
 
-#include "ros/ros.h"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
-#include "tf2_eigen/tf2_eigen.h"
-
-#include "Eigen/Dense"
-#include "Eigen/Geometry"
-
+#include <ros/ros.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_eigen/tf2_eigen.h>
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
 // ViSP
-#include "visp3/core/vpMath.h"
-#include "visp3/core/vpColVector.h"
-#include "visp3/core/vpHomogeneousMatrix.h"
-#include "visp3/core/vpMatrix.h"
-#include "visp3/core/vpTranslationVector.h"
-#include "visp3/core/vpQuaternionVector.h"
-#include "visp3/visual_features/vpFeatureThetaU.h"
-#include "visp3/visual_features/vpFeatureTranslation.h"
-#include "visp3/vs/vpServo.h"
+#include <visp3/core/vpMath.h>
+#include <visp3/core/vpColVector.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/core/vpMatrix.h>
+#include <visp3/core/vpTranslationVector.h>
+#include <visp3/core/vpQuaternionVector.h>
+#include <visp3/visual_features/vpFeatureThetaU.h>
+#include <visp3/visual_features/vpFeatureTranslation.h>
+#include <visp3/vs/vpServo.h>
 
 // msgs
 #include "std_msgs/String.h"
@@ -50,17 +48,15 @@ class VisualServoing{
         double pbvs_control_law_gain_lambda;
         double pbvs_control_deadband_error;
 
+        double xyz_vel_limit;
+        double rpy_vel_limit;
+
         std::string desired_camera_frame;
         std::string current_camera_frame;
         std::string robot_base_frame;
-
         std::string control_input_topic;
-        double control_input_topic_hz;
 
         arm_vs::CartVelCmd control_input;
-
-        double xyz_vel_limit;
-        double rpy_vel_limit;
 
     public:
         VisualServoing(ros::NodeHandle node_handle){
@@ -68,7 +64,7 @@ class VisualServoing{
             VisualServoing::getParametersValues();
 
             tf_listener = new tf2_ros::TransformListener(tf_buffer);
-            cart_vel_pub = nh.advertise<arm_vs::CartVelCmd>(control_input_topic, control_input_topic_hz);
+            cart_vel_pub = nh.advertise<arm_vs::CartVelCmd>(control_input_topic, 1);
 
             VisualServoing::pbvs();
         }
@@ -78,7 +74,6 @@ class VisualServoing{
             nh.param<double>("pbvs_control_law_gain_lambda", pbvs_control_law_gain_lambda, 1.0);
             nh.param<double>("pbvs_control_deadband_error", pbvs_control_deadband_error, 0.0001);
 
-            nh.param<double>("control_input_topic_hz", control_input_topic_hz, 60.0);
             nh.param<double>("xyz_vel_limit", xyz_vel_limit, 0.18);
             nh.param<double>("rpy_vel_limit", rpy_vel_limit, 0.18);
 

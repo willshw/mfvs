@@ -1,0 +1,5 @@
+# request variables
+string input_ptcld_topic
+---
+# response variables
+sensor_msgs/PointCloud2 template_pointcloud

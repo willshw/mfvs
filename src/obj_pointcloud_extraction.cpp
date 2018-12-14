@@ -7,7 +7,6 @@
  */
 #include <algorithm>
 #include <vector>
-#include <set>
 
 #include "ros/ros.h"
 #include "pcl_ros/point_cloud.h"
@@ -99,11 +98,12 @@ class Extraction
 
         check(&tl, input_cloud->width, input_cloud->height);
         check(&br, input_cloud->width, input_cloud->height);
-        // ROS_INFO("%d, %d, %d, %d", tl.first, tl.second, br.first, br.second);
 
+        int new_width = br.first - tl.first + 1;
         int new_height = br.second - tl.second + 1;
+
         // construct point indices array from input_cloud in bounding box
-        std::vector<int> tracked_indices(bbox->width * new_height);
+        std::vector<int> tracked_indices(new_width * new_height);
  
         for(auto row = 0; row < new_height; row++)
         {
@@ -112,7 +112,7 @@ class Extraction
                 boost::counting_iterator<int>(br.first + (tl.second + row) * input_cloud->width)
             );
 
-            std::copy(inds.begin(), inds.end(), tracked_indices.begin() + row * bbox->width);
+            std::copy(inds.begin(), inds.end(), tracked_indices.begin() + row * new_width);
         }
         
         extracted_indices->indices = tracked_indices;
@@ -124,8 +124,8 @@ class Extraction
         extract.setNegative(false);
         extract.filter(*extracted_cloud);
 
-        std::vector<int> indices;
-        pcl::removeNaNFromPointCloud(*extracted_cloud, *extracted_cloud, indices);
+        // std::vector<int> indices;
+        // pcl::removeNaNFromPointCloud(*extracted_cloud, *extracted_cloud, indices);
 
         // publish extracted points
         extracted_cloud->header = input_cloud->header;
@@ -147,6 +147,7 @@ class Extraction
         // setup synchronized subscriber using approximate time sync policy
         sync.reset(new Sync(MySyncPolicy(10), bbox_sub, pt_sub));
         sync->registerCallback(boost::bind(&Extraction::callback, this, _1, _2));
+
     }
 
 };

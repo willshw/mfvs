@@ -3,33 +3,34 @@
  * current point cloud scene.
  */
 
-#include "ros/ros.h"
-#include "pcl_ros/point_cloud.h"
-#include "tf2_ros/transform_broadcaster.h"
-#include "tf2_eigen/tf2_eigen.h"
+#include <ros/ros.h>
+#include <pcl_ros/point_cloud.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_eigen/tf2_eigen.h>
 
-#include "pcl/point_types.h"
-#include "pcl/io/pcd_io.h"
-#include "pcl/conversions.h"
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/conversions.h>
 
-#include "pcl/common/time.h"
-#include "pcl/common/centroid.h"
-#include "pcl/common/transforms.h"
+#include <pcl/common/time.h>
+#include <pcl/common/centroid.h>
+#include <pcl/common/transforms.h>
 
-#include "pcl/tracking/tracking.h"
+#include <pcl/tracking/tracking.h>
 
-#include "pcl/tracking/particle_filter.h"
-#include "pcl/tracking/kld_adaptive_particle_filter_omp.h"
-#include "pcl/tracking/particle_filter_omp.h"
+#include <pcl/tracking/particle_filter.h>
+#include <pcl/tracking/kld_adaptive_particle_filter_omp.h>
+#include <pcl/tracking/particle_filter_omp.h>
 
-#include "pcl/tracking/coherence.h"
-#include "pcl/tracking/distance_coherence.h"
-#include "pcl/tracking/hsv_color_coherence.h"
-#include "pcl/tracking/approx_nearest_pair_point_cloud_coherence.h"
-#include "pcl/tracking/nearest_pair_point_cloud_coherence.h"
+#include <pcl/tracking/coherence.h>
+#include <pcl/tracking/distance_coherence.h>
+#include <pcl/tracking/hsv_color_coherence.h>
+#include <pcl/tracking/approx_nearest_pair_point_cloud_coherence.h>
+#include <pcl/tracking/nearest_pair_point_cloud_coherence.h>
 
-#include "boost/foreach.hpp"
-#include "boost/format.hpp"
+#include <boost/foreach.hpp>
+#include <boost/format.hpp>
 
 // msgs
 #include "sensor_msgs/PointCloud2.h"
@@ -67,6 +68,8 @@ class PointcloudTracking
     CloudPtr template_cloud;
     boost::shared_ptr<ParticleFilter> tracker_;
     int counter;
+
+    tf2_ros::TransformBroadcaster br;
 
     void getParametersValues()
     {
@@ -117,12 +120,11 @@ class PointcloudTracking
             // transformation_stamped.header = msg_cloud->header;
             transformation_stamped.header.frame_id = msg_cloud->header.frame_id;
             transformation_stamped.child_frame_id = child_frame_id;
-
-            static tf2_ros::TransformBroadcaster br;
+            transformation_stamped.header.stamp = ros::Time::now();
             br.sendTransform(transformation_stamped);
             
-            // result_cloud->header.frame_id = msg_cloud->header.frame_id;
-            result_cloud->header = msg_cloud->header;
+            result_cloud->header.frame_id = msg_cloud->header.frame_id;
+            // result_cloud->header = msg_cloud->header;
             pub.publish(*result_cloud);
         }
     }
@@ -210,7 +212,8 @@ class PointcloudTracking
         CloudPtr transed_ref (new Cloud);
 
         pcl::compute3DCentroid<RefPointType> (*template_cloud, c);
-        trans.translation ().matrix () = Eigen::Vector3f (c[0], c[1], c[2]);
+        trans.translation().matrix() = Eigen::Vector3f (c[0], c[1], c[2]);
+        
         pcl::transformPointCloud<RefPointType> (*template_cloud, *transed_ref, trans.inverse());
 
         //set reference model and trans
@@ -222,6 +225,10 @@ class PointcloudTracking
         pub = nh.advertise<Cloud>(output_pointcloud_topic, 1);
 
         reset_service = nh.advertiseService(tracker_reset_service, &PointcloudTracking::reset_tracker_srv_callback, this);
+
+        tf2_ros::Buffer tfBuffer;
+        tf2_ros::TransformListener tfListener(tfBuffer);
+        geometry_msgs::TransformStamped transformStamped;
     }
 };
 

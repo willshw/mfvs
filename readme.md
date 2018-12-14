@@ -13,6 +13,7 @@ object recognition --> obejct tracking --> point cloud extraction -> object pose
 * ROS Packages
     * [realsense2_camera](https://github.com/intel-ros/realsense)
     * [ros_opencl_caffe](https://github.com/intel/ros_opencl_caffe)
+    * [easy_handeye](https://github.com/IFL-CAMP/easy_handeye)
 * PCL
 * OpenCV 3.4.3
 * Boost

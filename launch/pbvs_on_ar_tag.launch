@@ -1,10 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-    <include file="$(find mico_interaction)/launch/mico_moveit_sim.launch">
-        <arg name="eye_in_hand"      value="true"/>
-        <arg name="world_file"       value="$(find gazebo_control)/worlds/world_with_table_and_ar_tag0.world"/>
-    </include>
-
     <arg name="marker_size"             default="10.0" />
     <arg name="max_new_marker_error"    default="0.2" />
     
@@ -14,25 +9,29 @@
     <arg name="cam_info_topic"          default="/camera/rgb/camera_info" />
     <arg name="output_frame"            default="/camera_rgb_optical_frame" />
 
+    <!-- launch Mico Simulation -->
+    <include file="$(find mico_interaction)/launch/mico_moveit_sim.launch">
+        <arg name="eye_in_hand"         value="true"/>
+        <arg name="world_file"          value="$(find gazebo_control)/worlds/world_with_table_and_ar_tag0.world"/>
+    </include>
+
+    <!-- Desired Camera Frame Transform -->
+    <node name="static_tf_node_desired_camera_frame" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0.5 -1 0 0 0 ar_marker_0 desired_cam_frame"/>
+
+    <!-- start ARTag Detector -->
     <node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkersNoKinect" respawn="false" output="screen">
         <param name="marker_size"           type="double" value="$(arg marker_size)" />
         <param name="max_new_marker_error"  type="double" value="$(arg max_new_marker_error)" />
         <param name="max_track_error"       type="double" value="$(arg max_track_error)" />
         <param name="output_frame"          type="string" value="$(arg output_frame)" />
 
-        <remap from="camera_image"  to="$(arg cam_image_topic)" />
-        <remap from="camera_info"   to="$(arg cam_info_topic)" />
+        <remap from="camera_image"          to="$(arg cam_image_topic)" />
+        <remap from="camera_info"           to="$(arg cam_info_topic)" />
     </node>
 
-    <node name="static_tf_node_desired_camera_frame" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0.5 -1 0 0 0 ar_marker_0 desired_cam_frame"/>
-
+    <!-- start Visual Seroving -->
     <include file="$(find arm_vs)/launch/pbvs.launch">
-        <arg name="control_hz"                                  value="60.0" />
-        <arg name="command_ee_cartesian_velocity_topic_hz"      value="60.0" />
-        <arg name="control_gain"                                value="0.5" />
-        <arg name="control_deadband_error"                      value="0.0002" />
-        <arg name="xyz_vel_limit"                               value="0.18" />
-        <arg name="rpy_vel_limit"                               value="0.18" />
+        <arg name="control_gain"            value="0.5" />
     </include>
 
 </launch>
