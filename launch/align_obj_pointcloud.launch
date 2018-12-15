@@ -1,17 +1,18 @@
 <?xml version="1.0"?>
 <launch>
+
     <!-- Arguments for ICP alignment -->
-    <arg name="pf_trakcing_input_pointcloud"                        default="/voxel_grid/output" />
-    <arg name="pf_tracked_pointcloud"                               default="/tracked_pointcloud" />
-    <arg name="icp_output_pointcloud"                               default="/aligned_pointcloud" />
-    <arg name="icp_alignment_frame"                                 default="icp_alignment_frame" />
+    <arg name="icp_input_pointcloud"                        default="/voxel_grid/output" />
+    <arg name="icp_output_pointcloud"                       default="/icp_aligned_pointcloud" />
+    <arg name="icp_alignment_frame"                         default="icp_alignment_frame" />
+    <arg name="template_pointcloud_filename"                default="$(find arm_vs)/dataset/mustard/mustard.pcd" />
 
     <!-- ICP alignment -->
-    <node name="pointcloud_alignment" pkg="arm_vs" type="arm_vs_obj_pointcloud_alignment" output="screen">
-        <param name="input_template_pointcloud_topic"           type="string" value="$(arg pf_tracked_pointcloud)" />
-        <param name="input_scene_pointcloud_topic"              type="string" value="$(arg pf_trakcing_input_pointcloud)" />
-        <param name="output_pointcloud_topic"                   type="string" value="$(arg icp_output_pointcloud)" />
-        <param name="icp_alignment_frame"                       type="string" value="$(arg icp_alignment_frame)" />
+    <node name="icp_alignment" pkg="arm_vs" type="arm_vs_obj_pointcloud_alignment" output="screen">
+        <param name="input_pointcloud_topic"                type="string" value="$(arg icp_input_pointcloud)" />
+        <param name="output_pointcloud_topic"               type="string" value="$(arg icp_output_pointcloud)" />
+        <param name="template_cloud_filename"               type="string" value="$(arg template_pointcloud_filename)" />
+        <param name="icp_alignment_frame"                   type="string" value="$(arg icp_alignment_frame)" />
     </node>
 
 </launch>

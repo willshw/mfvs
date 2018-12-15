@@ -15,6 +15,7 @@
     <arg name="extractor_input_bbox_topic"            default="$(arg tracker_bbox_topic)" />
     <arg name="extractor_output_point_cloud_topic"    default="/tracked_object_point_cloud" />
 
+    <!-- Tracking object in RGB image -->
     <node name="object_image_tracking" pkg="arm_vs" type="arm_vs_obj_image_tracking_w_recognition" output="screen" >
         <param name="input_image_topic"         type="string" value="$(arg tracker_image_source_topic)" />
         <param name="input_obj_inf_topic"       type="string" value="$(arg inference_topic)" />

@@ -2,20 +2,18 @@
 <launch>
 
     <!-- Arguments for particle filter tracking -->
-    <arg name="pf_tracker_reset_service"                            default="reset_particle_filter_tracker" />
-
-    <arg name="pointcloud_template_pointcloud_filename"             default="$(find arm_vs)/dataset/vitamin/vitamin_bottle.pcd" />
-
-    <arg name="pf_trakcing_input_pointcloud"                        default="/voxel_grid/output" />
-    <arg name="pf_tracked_pointcloud"                               default="/tracked_pointcloud" />
-    <arg name="pf_tracked_template_frame"                           default="particle_filter_tracked_template_frame" />
+    <arg name="pf_input_pointcloud"                             default="/voxel_grid/output" />
+    <arg name="pf_output_pointcloud"                            default="/pf_tracked_pointcloud" />
+    <arg name="pf_tracked_frame"                                default="particle_filter_tracked_template_frame" />
+    <arg name="template_pointcloud_filename"                    default="$(find arm_vs)/dataset/mustard/mustard.pcd" />
+    <arg name="pf_tracker_reset_service"                        default="reset_particle_filter_tracker" />
 
     <!-- Particle filter tracker -->
-    <node name="pointcloud_tracking" pkg="arm_vs" type="arm_vs_obj_pointcloud_tracking" output="screen">
+    <node name="pf_tracking" pkg="arm_vs" type="arm_vs_obj_pointcloud_tracking" output="screen">
         <param name="input_pointcloud_topic"                    type="string" value="$(arg pf_trakcing_input_pointcloud)" />
         <param name="output_pointcloud_topic"                   type="string" value="$(arg pf_tracked_pointcloud)" />
-        <param name="template_cloud_filename"                   type="string" value="$(arg pointcloud_template_pointcloud_filename)" />
-        <param name="particle_filter_tracked_template_frame"    type="string" value="$(arg pf_tracked_template_frame)" />
+        <param name="template_cloud_filename"                   type="string" value="$(arg template_pointcloud_filename)" />
+        <param name="particle_filter_tracked_template_frame"    type="string" value="$(arg pf_tracked_frame)" />
         <param name="particle_filter_tracker_reset_service"     type="string" value="$(arg pf_tracker_reset_service)" />
     </node>
 
