@@ -17,7 +17,7 @@
     <arg name="extractor_output_point_cloud_topic"    default="/tracked_object_point_cloud" />
 
     <!-- Tracking object in RGB image -->
-    <node name="object_image_tracking" pkg="arm_vs" type="arm_vs_obj_image_tracking_w_recognition" output="screen" >
+    <node name="object_image_tracking" pkg="mfvs" type="mfvs_obj_image_tracking_w_recognition" output="screen" >
         <param name="input_obj_inf_topic"       type="string" value="$(arg object_detection_inference_topic)" />
         <param name="obj_of_interest"           type="string" value="$(arg object_of_interest)" />
         <param name="input_image_topic"         type="string" value="$(arg tracker_image_source_topic)" />
@@ -28,7 +28,7 @@
         <param name="missing_obj_frame_limit"   type="int"    value="$(arg missing_obj_frame_limit)" />
     </node>
 
-    <!-- <node name="object_image_tracking" pkg="arm_vs" type="arm_vs_obj_image_tracking" output="screen" >
+    <!-- <node name="object_image_tracking" pkg="mfvs" type="mfvs_obj_image_tracking" output="screen" >
         <param name="input_image_topic"         type="string" value="$(arg tracker_image_source_topic)" />
         <param name="tracker_type"              type="string" value="$(arg tracker_type)" />
         <param name="output_image_topic"        type="string" value="$(arg tracker_image_output_topic)" />
@@ -36,7 +36,7 @@
     </node> -->
 
     <!-- Point cloud extractor -->
-    <node name="object_pointcloud_extractor" pkg="arm_vs" type="arm_vs_obj_pointcloud_extraction" output="screen" >
+    <node name="object_pointcloud_extractor" pkg="mfvs" type="mfvs_obj_pointcloud_extraction" output="screen" >
         <param name="input_bbox_topic"          type="string" value="$(arg extractor_input_bbox_topic)" />
         <param name="input_pointcloud_topic"    type="string" value="$(arg extractor_input_point_cloud_topic)" />
         <param name="output_pointcloud_topic"   type="string" value="$(arg extractor_output_point_cloud_topic)" />

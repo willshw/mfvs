@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>arm_vs</name>
+  <name>mfvs</name>
   <version>0.0.0</version>
-  <description>The arm-vs package</description>
+  <description>model free visual servoing</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

@@ -18,7 +18,7 @@
     <arg name="command_ee_cartesian_velocity_topic"         default="/control_input" />
 
     <!-- PBVS Node -->
-    <node name="pbvs" pkg="arm_vs" type="arm_vs_pbvs" output="screen">
+    <node name="pbvs" pkg="mfvs" type="mfvs_pbvs" output="screen">
 
         <param name="pbvs_control_loop_hz"              type="double" value="$(arg control_hz)" />
         <param name="pbvs_control_law_gain_lambda"      type="double" value="$(arg control_gain)" />

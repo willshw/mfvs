@@ -30,7 +30,7 @@
     </node>
 
     <!-- start Visual Servoing -->
-    <include file="$(find arm_vs)/launch/pbvs.launch">
+    <include file="$(find mfvs)/launch/pbvs.launch">
         <arg name="control_gain"                                value="1.0" />
         <arg name="target_camera_frame"                         value="desired_cam_frame" />
         <arg name="current_camera_frame"                        value="camera_color_optical_frame" />
@@ -38,5 +38,5 @@
     </include>
 
     <!-- rviz -->
-    <node name="rviz" pkg="rviz" type="rviz" output="screen" args="-d $(find arm_vs)/aruco.rviz"/>
+    <node name="rviz" pkg="rviz" type="rviz" output="screen" args="-d $(find mfvs)/aruco.rviz"/>
 </launch>

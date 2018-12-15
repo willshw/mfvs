@@ -12,7 +12,7 @@
 
     <!-- Arguments for template capture -->
     <arg name="capture_template"                      default="false" />
-    <arg name="template_pointcloud_target_folder"     default="$(find arm_vs)/dataset/vitamin" />
+    <arg name="template_pointcloud_target_folder"     default="$(find mfvs)/dataset/vitamin" />
     <arg name="template_pointcloud_filename_prefix"   default="ptcld_" />
 
     <group ns="$(arg camera)">
@@ -63,7 +63,7 @@
         </node>
 
         <!-- Template capture -->
-        <include file="$(find arm_vs)/launch/capture_template.launch" if="$(arg capture_template)">
+        <include file="$(find mfvs)/launch/capture_template.launch" if="$(arg capture_template)">
             <arg name="nodelet_manager"                     value="$(arg manager)" />
             <arg name="ns"                                  value="/$(arg camera)" />
             <arg name="saving_pointcloud_target_folder"     value="$(arg template_pointcloud_target_folder)" />

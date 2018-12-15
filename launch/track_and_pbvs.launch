@@ -2,7 +2,7 @@
 
 <launch>
 
-    <include file="$(find arm_vs)/launch/track.launch" />
-    <include file="$(find arm_vs)/launch/pbvs.launch" />
+    <include file="$(find mfvs)/launch/track.launch" />
+    <include file="$(find mfvs)/launch/pbvs.launch" />
 
 </launch>

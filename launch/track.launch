@@ -25,10 +25,10 @@
     <arg name="pose_estimation_pointcloud_input"                    default="/$(arg camera)/voxel_grid/output" />
     <arg name="pose_estimation_pointcloud_ouput"                    default="pose_estimated_pointcloud" />
     <arg name="pose_estimation_pointcloud_frame"                    default="pose_estimation_pointcloud_frame" />
-    <!-- <arg name="pose_estimation_template_filename"                   default="$(find arm_vs)/dataset/mustard/mustard.pcd" /> -->
-    <!-- <arg name="pose_estimation_template_filename"                   default="$(find arm_vs)/dataset/beer/beer_coarse.pcd" /> -->
-    <!-- <arg name="pose_estimation_template_filename"                   default="$(find arm_vs)/dataset/cal_mug/cal_mug_clean.pcd" /> -->
-    <arg name="pose_estimation_template_filename"                   default="$(find arm_vs)/dataset/vitamin/vitamin_bottle.pcd" />
+    <!-- <arg name="pose_estimation_template_filename"                   default="$(find mfvs)/dataset/mustard/mustard.pcd" /> -->
+    <!-- <arg name="pose_estimation_template_filename"                   default="$(find mfvs)/dataset/beer/beer_coarse.pcd" /> -->
+    <!-- <arg name="pose_estimation_template_filename"                   default="$(find mfvs)/dataset/cal_mug/cal_mug_clean.pcd" /> -->
+    <arg name="pose_estimation_template_filename"                   default="$(find mfvs)/dataset/vitamin/vitamin_bottle.pcd" />
 
     <!-- Arguments for PCL Nodelets -->
     <arg name="pcl_nodelet_manager"                                 default="$(arg nodelet_manager)"/>
@@ -105,7 +105,7 @@
     </group>
 
     <!-- Image Tracking and Point Cloud Extraction Launcher -->
-    <include file="$(find arm_vs)/launch/track_and_extract_obj_pointcloud.launch"> 
+    <include file="$(find mfvs)/launch/track_and_extract_obj_pointcloud.launch"> 
         <arg name="object_detection_inference_topic"            value="$(arg obj_inference_output_topic)" />
         <arg name="tracker_image_source_topic"                  value="$(arg tracker_image_source_topic)" />
         <arg name="tracker_image_output_topic"                  value="$(arg tracker_image_output_topic)" />
@@ -122,7 +122,7 @@
     </include>
 
     <!-- Particle Filter Based Point Cloud Tracking Luancher -->
-    <include file="$(find arm_vs)/launch/track_and_align_obj_pointcloud.launch">
+    <include file="$(find mfvs)/launch/track_and_align_obj_pointcloud.launch">
 
         <arg name="icp_or_pf"                                   value="$(arg icp_or_pf)" />
 

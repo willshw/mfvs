@@ -30,7 +30,7 @@
     </node>
 
     <!-- start Visual Seroving -->
-    <include file="$(find arm_vs)/launch/pbvs.launch">
+    <include file="$(find mfvs)/launch/pbvs.launch">
         <arg name="control_gain"            value="0.5" />
     </include>
 

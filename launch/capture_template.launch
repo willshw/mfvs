@@ -3,7 +3,7 @@
 
     <!-- <arg name="nodelet_manager"                     default="pcl_manager" />
     <arg name="ns"                                  default="" /> -->
-    <arg name="saving_pointcloud_target_folder"     default="$(find arm_vs)/dataset/mustard" />
+    <arg name="saving_pointcloud_target_folder"     default="$(find mfvs)/dataset/mustard" />
     <arg name="saving_pointcloud_filename_prefix"   default="ptcld_" />
     <arg name="input_pointcloud_topic"              default="/realsense/voxel_grid/output" />
 
@@ -54,7 +54,7 @@
     </node> -->
 
     <!-- Save the non-planar points to pcd files -->
-    <node name="pointcloud_template_saving" pkg="arm_vs" type="arm_vs_obj_pointcloud_template_save_to_pcd" output="screen">
+    <node name="pointcloud_template_saving" pkg="mfvs" type="mfvs_obj_pointcloud_template_save_to_pcd" output="screen">
         <param name="input_pointcloud_topic"    type="string" value="$(arg input_pointcloud_topic)" />
         <param name="target_folder"             type="string" value="$(arg saving_pointcloud_target_folder)" />
         <param name="filename_prefix"           type="string" value="$(arg saving_pointcloud_filename_prefix)" />
