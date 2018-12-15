@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    
+    <!-- Pose estimation method (ICP: true: Particle Filter: false) -->
     <arg name="icp_or_pf"                                           default="true" />
 
     <!-- Arguments for point cloud estimation nodes -->
@@ -9,19 +9,21 @@
     <arg name="pose_estimation_pointcloud_frame"                    default="pose_estimation_pointcloud_frame" />
     <arg name="pose_estimation_template_filename"                   default="$(find arm_vs)/dataset/vitamin/vitamin_bottle.pcd" />
 
-    <include file="$(find arm_vs)/launch/track_obj_pointcloud.launch" unless="$(arg icp_or_pf)">
-        <arg name="pf_input_pointcloud"                         default="$(arg pose_estimation_pointcloud_input)" />
-        <arg name="pf_output_pointcloud"                        default="$(arg pose_estimation_pointcloud_ouput)" />
-        <arg name="pf_tracked_frame"                            default="$(arg pose_estimation_pointcloud_frame)" />
-        <arg name="template_pointcloud_filename"                default="$(arg pose_estimation_template_filename)" />
-        <arg name="pf_tracker_reset_service"                    default="reset_particle_filter_tracker" />
-    </include>
-
+    <!-- ICP alignment -->
     <include file="$(find arm_vs)/launch/align_obj_pointcloud.launch" if="$(arg icp_or_pf)">
         <arg name="icp_input_pointcloud"                        default="$(arg pose_estimation_pointcloud_input)" />
         <arg name="icp_output_pointcloud"                       default="$(arg pose_estimation_pointcloud_ouput)" />
         <arg name="icp_alignment_frame"                         default="$(arg pose_estimation_pointcloud_frame)" />
         <arg name="template_pointcloud_filename"                default="$(arg pose_estimation_template_filename)" />
+    </include>
+
+    <!-- Particle filter tracking -->
+    <include file="$(find arm_vs)/launch/track_obj_pointcloud.launch" unless="$(arg icp_or_pf)">
+        <arg name="pf_input_pointcloud"                         default="$(arg pose_estimation_pointcloud_input)" />
+        <arg name="pf_output_pointcloud"                        default="$(arg pose_estimation_pointcloud_ouput)" />
+        <arg name="pf_tracked_frame"                            default="$(arg pose_estimation_pointcloud_frame)" />
+        <arg name="template_pointcloud_filename"                default="$(arg pose_estimation_template_filename)" />
+        <arg name="pf_tracker_reset_service"                    default="reset_particle_filter" />
     </include>
 
 </launch>

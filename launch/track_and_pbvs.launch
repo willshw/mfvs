@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <include file="$(find arm_vs)/launch/track.launch" />
+    <include file="$(find arm_vs)/launch/pbvs.launch" />
+
+</launch>

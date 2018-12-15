@@ -1,17 +1,15 @@
 <?xml version="1.0"?>
 
 <launch>
+    <!-- ARGUMENTS -->
     <arg name="obj_recognition_viewer_launch"                        default="true" />
-    <arg name="obj_tracking_viewer_launch"                           default="true" />
     <arg name="rviz_launch"                                          default="true" />
 
-    <!-- Arguments for camera launch file -->
-    <!-- Arguments for launching Realsense camera -->
+    <!-- Arguments for Realsense Camera -->
     <arg name="nodelet_manager"                                     default="nodelet_manager"/>
     <arg name="camera"                                              default="realsense" />
 
-    <!-- Arguments for image tracking and point cloud extraction launch file -->
-    <!-- Arguments for Image Tracker -->
+    <!-- Arguments for Image Tracking -->
     <arg name="tracker_image_source_topic"                          default="/$(arg camera)/color/image_raw" />
     <arg name="tracker_image_output_topic"                          default="/obj_tracking_image" />
     <arg name="tracker_type"                                        default="CSRT" />
@@ -22,45 +20,38 @@
     <arg name="extractor_input_bbox_topic"                          default="$(arg tracker_bbox_topic)" />
     <arg name="extractor_output_point_cloud_topic"                  default="/tracked_object_point_cloud" />
 
-    <!-- Arguments for PCL nodelets -->
+    <!-- Arguments for Point Cloud Pose Estimation -->
+    <arg name="icp_or_pf"                                           default="true" />
+    <arg name="pose_estimation_pointcloud_input"                    default="/$(arg camera)/voxel_grid/output" />
+    <arg name="pose_estimation_pointcloud_ouput"                    default="pose_estimated_pointcloud" />
+    <arg name="pose_estimation_pointcloud_frame"                    default="pose_estimation_pointcloud_frame" />
+    <arg name="pose_estimation_template_filename"                   default="$(find arm_vs)/dataset/mustard/mustard.pcd" />
+    <!-- <arg name="pose_estimation_template_filename"             default="$(find arm_vs)/dataset/beer/beer_coarse.pcd" /> -->
+    <!-- <arg name="pose_estimation_template_filename"             default="$(find arm_vs)/dataset/cal_mug/cal_mug_clean.pcd" /> -->
+
+    <!-- Arguments for PCL Nodelets -->
     <arg name="pcl_nodelet_manager"                                 default="$(arg nodelet_manager)"/>
-    <arg name="filter_axis"                                         default="z" />
-
-    <!-- Arguments for point cloud tracking launch file -->
-    <!-- Arguments for particle filter tracking -->
-    <arg name="pf_tracker_reset_service"                            default="reset_particle_filter_tracker" />
-
-    <arg name="pointcloud_template_pointcloud_filename"             default="$(find arm_vs)/dataset/mustard/mustard.pcd" />
-    <!-- <arg name="pointcloud_template_pointcloud_filename"             default="$(find arm_vs)/dataset/beer/beer_coarse.pcd" /> -->
-    <!-- <arg name="pointcloud_template_pointcloud_filename"             default="$(find arm_vs)/dataset/cal_mug/cal_mug_clean.pcd" /> -->
-
-    <arg name="pf_trakcing_input_pointcloud"                        default="/$(arg camera)/voxel_grid/output" />
-    <arg name="pf_tracked_pointcloud"                               default="/pf_tracked_pointcloud" />
-    <arg name="pf_tracked_template_frame"                           default="particle_filter_tracked_template_frame" />
-
-    <!-- Arguments for ICP alignment -->
-    <arg name="icp_output_pointcloud"                               default="/aligned_pointcloud" />
-    <arg name="icp_alignment_frame"                                 default="icp_alignment_frame" />
-
+    <arg name="voxel_grid_filter_axis"                              default="z" />
+    
+    <!-- Arguments for OpenCL Caffe -->
     <arg name="opencl_caffe_nodelet_manager"                        default="$(arg nodelet_manager)" />
     <arg name="opencl_caffe_nodelet"                                default="opencl_caffe_nodelet" />
     <arg name="opencl_caffe_viewer"                                 default="opencl_caffe_viewer" />
     <arg name="obj_inference_output_topic"                          default="/$(arg camera)/opencl_caffe/inference" />
 
-    <!-- Launch Node and Nodelets -->
+    <!-- LAUNCH NODE AND NODELETS -->
 
+    <!-- Rigid transform between camera and end effector, rigid transform gotten from calibration -->
     <node pkg="tf2_ros" type="static_transform_publisher" name="camera_to_hand" 
         args="-0.0187845171388 0.0629403083384 -0.0936029139899
                 -0.5111042314 0.499085936412 0.50680045647 0.482533926313 
                 mico_link_hand $(arg camera)_link" />
 
-    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="desired_camera_pose" 
-        args="0 0 -0.4 0 0 0 1 particle_filter_tracked_template_frame desired_camera_pose" /> -->
-
+    <!-- Desired Pose Static Transform -->
     <node pkg="tf2_ros" type="static_transform_publisher" name="desired_camera_pose" 
-        args="0 0 -0.4 0 0 0 1 icp_alignment_frame desired_camera_pose" />
+        args="0 0 -0.4 0 0 0 1 $(arg pose_estimation_pointcloud_frame) desired_camera_pose" />
 
-    <!-- Realsense camera launcher -->
+    <!-- Realsense Camera Launcher -->
     <include file="$(find realsense2_camera)/launch/rs_rgbd.launch"> 
         <arg name="manager"                     value="$(arg nodelet_manager)"/>
         <arg name="camera"                      value="$(arg camera)" />
@@ -97,7 +88,11 @@
         <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
         <node name="voxel_grid" pkg="nodelet" type="nodelet" args="load pcl/VoxelGrid $(arg pcl_nodelet_manager)" output="screen">
             <remap from="~input"                to="$(arg extractor_output_point_cloud_topic)"/>
-            <rosparam param="filter_field_name" subst_value="True">$(arg filter_axis)</rosparam>
+            
+            <rosparam param="filter_field_name" subst_value="True">
+                $(arg voxel_grid_filter_axis)
+            </rosparam>
+            
             <rosparam>
                 filter_limit_min: 0.01
                 filter_limit_max: 1.0
@@ -108,7 +103,7 @@
 
     </group>
 
-    <!-- Image tracking and point cloud extraction launcher -->
+    <!-- Image Tracking and Point Cloud Extraction Launcher -->
     <include file="$(find arm_vs)/launch/track_and_extract_obj_pointcloud.launch"> 
         
         <arg name="tracker_image_source_topic"                  value="$(arg tracker_image_source_topic)" />
@@ -126,19 +121,15 @@
 
     </include>
 
-    <!-- Particle filter based point cloud tracking luancher -->
+    <!-- Particle Filter Based Point Cloud Tracking Luancher -->
     <include file="$(find arm_vs)/launch/track_and_align_obj_pointcloud.launch">
-    
-        <arg name="pf_tracker_reset_service"                        value="$(arg pf_tracker_reset_service)" />
 
-        <arg name="pointcloud_template_pointcloud_filename"         value="$(arg pointcloud_template_pointcloud_filename)" />
+        <arg name="icp_or_pf"                                   value="icp_or_pf" />
 
-        <arg name="pf_trakcing_input_pointcloud"                    value="$(arg pf_trakcing_input_pointcloud)" />
-        <arg name="pf_tracked_pointcloud"                           value="$(arg pf_tracked_pointcloud)" />
-        <arg name="pf_tracked_template_frame"                       value="$(arg pf_tracked_template_frame)" />
-
-        <arg name="icp_output_pointcloud"                           value="$(arg icp_output_pointcloud)" />
-        <arg name="icp_alignment_frame"                             value="$(arg icp_alignment_frame)" />
+        <arg name="pose_estimation_pointcloud_input"            value="pose_estimation_pointcloud_input" />
+        <arg name="pose_estimation_pointcloud_ouput"            value="pose_estimation_pointcloud_ouput" />
+        <arg name="pose_estimation_pointcloud_frame"            value="pose_estimation_pointcloud_frame" />
+        <arg name="pose_estimation_template_filename"           value="pose_estimation_template_filename" />
 
     </include>
     

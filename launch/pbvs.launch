@@ -1,20 +1,25 @@
 <?xml version="1.0"?>
 <launch>
+    <!-- Control Related -->
     <arg name="control_hz"                                  default="60.0" />
     <arg name="control_gain"                                default="0.75" />
     <arg name="control_deadband_error"                      default="0.0002" />
     
+    <!-- Robot Cart Vel Limit -->
     <arg name="xyz_vel_limit"                               default="0.18" />
     <arg name="rpy_vel_limit"                               default="0.18" />
 
+    <!-- Frames for Visual Servoing -->
     <arg name="target_camera_frame"                         default="desired_camera_pose" />
     <arg name="current_camera_frame"                        default="realsense_color_optical_frame" />
     <arg name="robot_base_frame"                            default="mico_link_base" />
 
+    <!-- Control Command Topic -->
     <arg name="command_ee_cartesian_velocity_topic"         default="/control_input" />
 
     <!-- PBVS Node -->
     <node name="pbvs" pkg="arm_vs" type="arm_vs_pbvs" output="screen">
+
         <param name="pbvs_control_loop_hz"              type="double" value="$(arg control_hz)" />
         <param name="pbvs_control_law_gain_lambda"      type="double" value="$(arg control_gain)" />
         <param name="pbvs_control_deadband_error"       type="double" value="$(arg control_deadband_error)" />
@@ -27,6 +32,7 @@
         <param name="robot_base_frame"                  type="string" value="$(arg robot_base_frame)" />
 
         <param name="control_input_topic"               type="string" value="$(arg command_ee_cartesian_velocity_topic)" />
+        
     </node>
 
 </launch>

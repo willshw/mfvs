@@ -2,29 +2,30 @@
 <launch>
 
     <!-- Arguments for Image Tracker -->
+    <arg name="object_detection_inference_topic"      default="/opencl_caffe/inference" />
+    <arg name="object_of_interest"                    default="bottle" />
     <arg name="tracker_image_source_topic"            default="/realsense/color/image_raw" />
     <arg name="tracker_image_output_topic"            default="/tracked_frame" />
     <arg name="tracker_type"                          default="CSRT" />
-    <arg name="inference_topic"                       default="/opencl_caffe/inference" />
+    <arg name="tracker_bbox_topic"                    default="/tracked_obj_bbox" />
     <arg name="tracked_frame_limit"                   default="15" />
     <arg name="missing_obj_frame_limit"               default="30" />
-    <arg name="tracker_bbox_topic"                    default="/tracked_obj_bbox" />
 
     <!-- Arguments for Object Point Cloud Extraction -->
-    <arg name="extractor_input_point_cloud_topic"     default="/realsense/depth_registered/points" />
     <arg name="extractor_input_bbox_topic"            default="$(arg tracker_bbox_topic)" />
+    <arg name="extractor_input_point_cloud_topic"     default="/realsense/depth_registered/points" />
     <arg name="extractor_output_point_cloud_topic"    default="/tracked_object_point_cloud" />
 
     <!-- Tracking object in RGB image -->
     <node name="object_image_tracking" pkg="arm_vs" type="arm_vs_obj_image_tracking_w_recognition" output="screen" >
+        <param name="input_obj_inf_topic"       type="string" value="$(arg object_detection_inference_topic)" />
+        <param name="obj_of_interest"           type="string" value="$(arg object_of_interest)" />
         <param name="input_image_topic"         type="string" value="$(arg tracker_image_source_topic)" />
-        <param name="input_obj_inf_topic"       type="string" value="$(arg inference_topic)" />
+        <param name="output_image_topic"        type="string" value="$(arg tracker_image_output_topic)" />
         <param name="tracker_type"              type="string" value="$(arg tracker_type)" />
-        <param name="obj_of_interest"           type="string" value="bottle" />
+        <param name="output_bbox_topic"         type="string" value="$(arg tracker_bbox_topic)" />
         <param name="tracked_frame_limit"       type="int"    value="$(arg tracked_frame_limit)" />
         <param name="missing_obj_frame_limit"   type="int"    value="$(arg missing_obj_frame_limit)" />
-        <param name="output_image_topic"        type="string" value="$(arg tracker_image_output_topic)" />
-        <param name="output_bbox_topic"         type="string" value="$(arg tracker_bbox_topic)" />
     </node>
 
     <!-- <node name="object_image_tracking" pkg="arm_vs" type="arm_vs_obj_image_tracking" output="screen" >
@@ -36,8 +37,8 @@
 
     <!-- Point cloud extractor -->
     <node name="object_pointcloud_extractor" pkg="arm_vs" type="arm_vs_obj_pointcloud_extraction" output="screen" >
-        <param name="input_pointcloud_topic"    type="string" value="$(arg extractor_input_point_cloud_topic)" />
         <param name="input_bbox_topic"          type="string" value="$(arg extractor_input_bbox_topic)" />
+        <param name="input_pointcloud_topic"    type="string" value="$(arg extractor_input_point_cloud_topic)" />
         <param name="output_pointcloud_topic"   type="string" value="$(arg extractor_output_point_cloud_topic)" />
     </node>
 
