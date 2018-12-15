@@ -88,7 +88,7 @@ target_link_libraries(${PROJECT_NAME}_pbvs
 add_dependencies(${PROJECT_NAME}_pbvs
   ${catkin_EXPORTED_TARGETS}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  # arm_vs_generate_messages_cpp
+  arm_vs_generate_messages_cpp
 )
 
 # node for rgb tracking

@@ -80,51 +80,54 @@ class Extraction
      */
     void callback(const arm_vs::BBox::ConstPtr bbox, const RefPointCloud::ConstPtr& input_cloud)
     {
-        RefPointCloud::Ptr extracted_cloud(new RefPointCloud);
-        pcl::PointIndices::Ptr extracted_indices(new pcl::PointIndices);
-        
-        extracted_indices->header = input_cloud->header;
-
-        // prep the output cloud
-        extracted_cloud->header = input_cloud->header;
-        extracted_cloud->sensor_origin_ = input_cloud->sensor_origin_;
-        extracted_cloud->sensor_orientation_ = input_cloud->sensor_orientation_;
-
-        // bouding box top left pixel location and bottom right pixel location
-        std::pair<int, int> tl = std::make_pair(bbox->x, bbox->y);
-        std::pair<int, int> br = std::make_pair(bbox->x + bbox->width - 1, bbox->y + bbox->height - 1);
-
-        check(&tl, input_cloud->width, input_cloud->height);
-        check(&br, input_cloud->width, input_cloud->height);
-
-        int new_width = br.first - tl.first + 1;
-        int new_height = br.second - tl.second + 1;
-
-        // construct point indices array from input_cloud in bounding box
-        std::vector<int> tracked_indices(new_width * new_height);
- 
-        for(auto row = 0; row < new_height; row++)
+        if(bbox->detection)
         {
-            std::vector<int> inds(
-                boost::counting_iterator<int>(tl.first + (tl.second + row) * input_cloud->width), 
-                boost::counting_iterator<int>(br.first + (tl.second + row) * input_cloud->width)
-            );
+            RefPointCloud::Ptr extracted_cloud(new RefPointCloud);
+            pcl::PointIndices::Ptr extracted_indices(new pcl::PointIndices);
+            
+            extracted_indices->header = input_cloud->header;
 
-            std::copy(inds.begin(), inds.end(), tracked_indices.begin() + row * new_width);
+            // prep the output cloud
+            extracted_cloud->header = input_cloud->header;
+            extracted_cloud->sensor_origin_ = input_cloud->sensor_origin_;
+            extracted_cloud->sensor_orientation_ = input_cloud->sensor_orientation_;
+
+            // bouding box top left pixel location and bottom right pixel location
+            std::pair<int, int> tl = std::make_pair(bbox->x, bbox->y);
+            std::pair<int, int> br = std::make_pair(bbox->x + bbox->width - 1, bbox->y + bbox->height - 1);
+
+            check(&tl, input_cloud->width, input_cloud->height);
+            check(&br, input_cloud->width, input_cloud->height);
+
+            int new_width = br.first - tl.first + 1;
+            int new_height = br.second - tl.second + 1;
+
+            // construct point indices array from input_cloud in bounding box
+            std::vector<int> tracked_indices(new_width * new_height);
+    
+            for(auto row = 0; row < new_height; row++)
+            {
+                std::vector<int> inds(
+                    boost::counting_iterator<int>(tl.first + (tl.second + row) * input_cloud->width), 
+                    boost::counting_iterator<int>(br.first + (tl.second + row) * input_cloud->width)
+                );
+
+                std::copy(inds.begin(), inds.end(), tracked_indices.begin() + row * new_width);
+            }
+            
+            extracted_indices->indices = tracked_indices;
+
+            // extract points from input point cloud
+            pcl::ExtractIndices<RefPointType> extract;
+            extract.setInputCloud(input_cloud);
+            extract.setIndices(extracted_indices);
+            extract.setNegative(false);
+            extract.filter(*extracted_cloud);
+
+            // publish extracted points
+            extracted_cloud->header = input_cloud->header;
+            extracted_pt_pub.publish(*extracted_cloud);
         }
-        
-        extracted_indices->indices = tracked_indices;
-
-        // extract points from input point cloud
-        pcl::ExtractIndices<RefPointType> extract;
-        extract.setInputCloud(input_cloud);
-        extract.setIndices(extracted_indices);
-        extract.setNegative(false);
-        extract.filter(*extracted_cloud);
-
-        // publish extracted points
-        extracted_cloud->header = input_cloud->header;
-        extracted_pt_pub.publish(*extracted_cloud);
     }
 
     public:

@@ -30,8 +30,8 @@
     <!-- Arguments for particle filter tracking -->
     <arg name="pf_tracker_reset_service"                            default="reset_particle_filter_tracker" />
 
-    <!-- <arg name="pointcloud_template_pointcloud_filename"             default="$(find arm_vs)/dataset/mustard/mustard.pcd" /> -->
-    <arg name="pointcloud_template_pointcloud_filename"             default="$(find arm_vs)/dataset/vitamin/vitamin_bottle.pcd" />
+    <arg name="pointcloud_template_pointcloud_filename"             default="$(find arm_vs)/dataset/mustard/mustard.pcd" />
+    <!-- <arg name="pointcloud_template_pointcloud_filename"             default="$(find arm_vs)/dataset/beer/beer_coarse.pcd" /> -->
     <!-- <arg name="pointcloud_template_pointcloud_filename"             default="$(find arm_vs)/dataset/cal_mug/cal_mug_clean.pcd" /> -->
 
     <arg name="pf_trakcing_input_pointcloud"                        default="/$(arg camera)/voxel_grid/output" />
@@ -54,8 +54,11 @@
                 -0.5111042314 0.499085936412 0.50680045647 0.482533926313 
                 mico_link_hand $(arg camera)_link" />
 
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="desired_camera_pose" 
+        args="0 0 -0.4 0 0 0 1 particle_filter_tracked_template_frame desired_camera_pose" /> -->
+
     <node pkg="tf2_ros" type="static_transform_publisher" name="desired_camera_pose" 
-        args="0 0 -0.4 0 0 0 1 particle_filter_tracked_template_frame desired_camera_pose" />
+        args="0 0 -0.4 0 0 0 1 icp_alignment_frame desired_camera_pose" />
 
     <!-- Realsense camera launcher -->
     <include file="$(find realsense2_camera)/launch/rs_rgbd.launch"> 
@@ -81,13 +84,23 @@
             <arg name="output_topic"            value="$(arg obj_inference_output_topic)" />
         </include>
 
+        <!-- <node pkg="nodelet" type="nodelet" name="passthrough" args="load pcl/PassThrough $(arg pcl_nodelet_manager)" output="screen">
+            <remap from="~input" to="$(arg extractor_output_point_cloud_topic)" />
+            <rosparam>
+                filter_field_name: z
+                filter_limit_min: 0.01
+                filter_limit_max: 1.0
+                filter_limit_negative: False
+            </rosparam>
+        </node> -->
+
         <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
         <node name="voxel_grid" pkg="nodelet" type="nodelet" args="load pcl/VoxelGrid $(arg pcl_nodelet_manager)" output="screen">
             <remap from="~input"                to="$(arg extractor_output_point_cloud_topic)"/>
             <rosparam param="filter_field_name" subst_value="True">$(arg filter_axis)</rosparam>
             <rosparam>
                 filter_limit_min: 0.01
-                filter_limit_max: 1.5
+                filter_limit_max: 1.0
                 filter_limit_negative: False
                 leaf_size: 0.005
             </rosparam>

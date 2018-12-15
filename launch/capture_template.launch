@@ -3,13 +3,13 @@
 
     <!-- <arg name="nodelet_manager"                     default="pcl_manager" />
     <arg name="ns"                                  default="" /> -->
-    <arg name="saving_pointcloud_target_folder"     default="$(find arm_vs)/dataset/vitamin" />
+    <arg name="saving_pointcloud_target_folder"     default="$(find arm_vs)/dataset/mustard" />
     <arg name="saving_pointcloud_filename_prefix"   default="ptcld_" />
-    <arg name="input_pointcloud_topic"              default="/camera/depth_registered/points" />
+    <arg name="input_pointcloud_topic"              default="/realsense/voxel_grid/output" />
 
-    <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
+    <!-- <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
 
-    <!-- <node pkg="nodelet" type="nodelet" name="passthrough" args="load pcl/PassThrough pcl_manager" output="screen">
+    <node pkg="nodelet" type="nodelet" name="passthrough" args="load pcl/PassThrough pcl_manager" output="screen">
         <remap from="~input" to="$(arg input_pointcloud_topic)" />
         <rosparam>
             filter_field_name: z

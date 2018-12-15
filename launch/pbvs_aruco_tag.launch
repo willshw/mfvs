@@ -31,7 +31,7 @@
 
     <!-- start Visual Servoing -->
     <include file="$(find arm_vs)/launch/pbvs.launch">
-        <arg name="control_gain"                                value="0.50" />
+        <arg name="control_gain"                                value="1.0" />
         <arg name="target_camera_frame"                         value="desired_cam_frame" />
         <arg name="current_camera_frame"                        value="camera_color_optical_frame" />
         <arg name="robot_base_frame"                            value="mico_link_base" />

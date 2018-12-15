@@ -31,6 +31,7 @@
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/TransformStamped.h"
 #include "arm_vs/CartVelCmd.h"
+#include "arm_vs/BBox.h"
 
 #define PI 3.14159265
 
@@ -42,6 +43,7 @@ class VisualServoing{
         tf2_ros::TransformListener* tf_listener;
         geometry_msgs::TransformStamped tf_transform;
         ros::Publisher cart_vel_pub;
+        // ros::Subscriber box_sub;
 
         //parameters
         double pbvs_control_loop_hz;
@@ -57,6 +59,7 @@ class VisualServoing{
         std::string control_input_topic;
 
         arm_vs::CartVelCmd control_input;
+        bool detection;
 
     public:
         VisualServoing(ros::NodeHandle node_handle){
@@ -65,10 +68,16 @@ class VisualServoing{
 
             tf_listener = new tf2_ros::TransformListener(tf_buffer);
             cart_vel_pub = nh.advertise<arm_vs::CartVelCmd>(control_input_topic, 1);
+            // box_sub = nh.subscribe<arm_vs::BBox>("/tracked_obj_bbox", 1, &VisualServoing::callback_box, this);
 
             VisualServoing::pbvs();
         }
         
+        // void callback_box(const arm_vs::BBox::ConstPtr& bbox)
+        // {
+        //     detection = bbox->detection;
+        // }
+
         void getParametersValues(){
             nh.param<double>("pbvs_control_loop_hz", pbvs_control_loop_hz, 60.0);
             nh.param<double>("pbvs_control_law_gain_lambda", pbvs_control_law_gain_lambda, 1.0);

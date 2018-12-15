@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <launch>
     <arg name="control_hz"                                  default="60.0" />
-    <arg name="control_gain"                                default="0.25" />
+    <arg name="control_gain"                                default="0.75" />
     <arg name="control_deadband_error"                      default="0.0002" />
     
     <arg name="xyz_vel_limit"                               default="0.18" />
     <arg name="rpy_vel_limit"                               default="0.18" />
 
-    <arg name="target_camera_frame"                         default="desired_cam_frame" />
-    <arg name="current_camera_frame"                        default="camera_rgb_optical_frame" />
+    <arg name="target_camera_frame"                         default="desired_camera_pose" />
+    <arg name="current_camera_frame"                        default="realsense_color_optical_frame" />
     <arg name="robot_base_frame"                            default="mico_link_base" />
 
     <arg name="command_ee_cartesian_velocity_topic"         default="/control_input" />
@@ -19,8 +19,8 @@
         <param name="pbvs_control_law_gain_lambda"      type="double" value="$(arg control_gain)" />
         <param name="pbvs_control_deadband_error"       type="double" value="$(arg control_deadband_error)" />
 
-        <arg name="xyz_vel_limit"                       type="double" value="$(arg xyz_vel_limit)" />
-        <arg name="rpy_vel_limit"                       type="double" value="$(arg rpy_vel_limit)" />
+        <param name="xyz_vel_limit"                       type="double" value="$(arg xyz_vel_limit)" />
+        <param name="rpy_vel_limit"                       type="double" value="$(arg rpy_vel_limit)" />
 
         <param name="desired_camera_frame"              type="string" value="$(arg target_camera_frame)" />
         <param name="current_camera_frame"              type="string" value="$(arg current_camera_frame)" />

@@ -76,6 +76,7 @@ class TrackerCV
     image_transport::ImageTransport img_trans;
     image_transport::Publisher img_pub;
     ros::Publisher bbox_pub;
+    ros::Publisher object_detection_pub;
 
     std::string input_image_topic;
     std::string input_obj_inf_topic;
@@ -126,6 +127,7 @@ class TrackerCV
     {
         trackerInitialized = false;
         kalmanInitialized = false;
+        updatedBox = false;
         tracked_frame_counter = 0;
 
         tracker.release();
@@ -338,7 +340,8 @@ class TrackerCV
 
         img_pub = img_trans.advertise(output_image_topic, 1);
         bbox_pub = nh.advertise<arm_vs::BBox>(output_bbox_topic, 1);
-        
+
+
         // use kalman filter to predict motion between detection and tracking frames to alleviate low bounding box
         ros::Rate r(30); // 30 hz
         while(ros::ok())
@@ -351,16 +354,30 @@ class TrackerCV
             if(kalmanInitialized)
             {
                 // update time changed in state transistion matrix
-                kf.transitionMatrix.at<float>(2) = dT*4.0;
-                kf.transitionMatrix.at<float>(9) = dT*4.0;
+                kf.transitionMatrix.at<float>(2) = dT;
+                kf.transitionMatrix.at<float>(9) = dT;
 
                 state = kf.predict();
 
                 bbox_msg_out.header.stamp = ros::Time::now();
-                bbox_msg_out.x = static_cast<uint>(state.at<float>(0));
-                bbox_msg_out.y = static_cast<uint>(state.at<float>(1));
-                bbox_msg_out.width = static_cast<uint>(state.at<float>(4));
-                bbox_msg_out.height = static_cast<uint>(state.at<float>(5));
+
+                if(trackerInitialized)
+                {
+                    bbox_msg_out.detection = true;
+                    bbox_msg_out.x = static_cast<uint>(state.at<float>(0));
+                    bbox_msg_out.y = static_cast<uint>(state.at<float>(1));
+                    bbox_msg_out.width = static_cast<uint>(state.at<float>(4));
+                    bbox_msg_out.height = static_cast<uint>(state.at<float>(5));
+                }
+                else
+                {
+                    bbox_msg_out.detection = false;
+                    bbox_msg_out.x = static_cast<uint>(0);
+                    bbox_msg_out.y = static_cast<uint>(0);
+                    bbox_msg_out.width = static_cast<uint>(0);
+                    bbox_msg_out.height = static_cast<uint>(0);
+                }
+
                 bbox_pub.publish(bbox_msg_out);
             }
 
