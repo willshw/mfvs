@@ -25,9 +25,10 @@
     <arg name="pose_estimation_pointcloud_input"                    default="/$(arg camera)/voxel_grid/output" />
     <arg name="pose_estimation_pointcloud_ouput"                    default="pose_estimated_pointcloud" />
     <arg name="pose_estimation_pointcloud_frame"                    default="pose_estimation_pointcloud_frame" />
-    <arg name="pose_estimation_template_filename"                   default="$(find arm_vs)/dataset/mustard/mustard.pcd" />
-    <!-- <arg name="pose_estimation_template_filename"             default="$(find arm_vs)/dataset/beer/beer_coarse.pcd" /> -->
-    <!-- <arg name="pose_estimation_template_filename"             default="$(find arm_vs)/dataset/cal_mug/cal_mug_clean.pcd" /> -->
+    <!-- <arg name="pose_estimation_template_filename"                   default="$(find arm_vs)/dataset/mustard/mustard.pcd" /> -->
+    <!-- <arg name="pose_estimation_template_filename"                   default="$(find arm_vs)/dataset/beer/beer_coarse.pcd" /> -->
+    <!-- <arg name="pose_estimation_template_filename"                   default="$(find arm_vs)/dataset/cal_mug/cal_mug_clean.pcd" /> -->
+    <arg name="pose_estimation_template_filename"                   default="$(find arm_vs)/dataset/vitamin/vitamin_bottle.pcd" />
 
     <!-- Arguments for PCL Nodelets -->
     <arg name="pcl_nodelet_manager"                                 default="$(arg nodelet_manager)"/>
@@ -105,13 +106,12 @@
 
     <!-- Image Tracking and Point Cloud Extraction Launcher -->
     <include file="$(find arm_vs)/launch/track_and_extract_obj_pointcloud.launch"> 
-        
+        <arg name="object_detection_inference_topic"            value="$(arg obj_inference_output_topic)" />
         <arg name="tracker_image_source_topic"                  value="$(arg tracker_image_source_topic)" />
         <arg name="tracker_image_output_topic"                  value="$(arg tracker_image_output_topic)" />
         <arg name="tracker_type"                                value="$(arg tracker_type)" />
         <arg name="tracker_bbox_topic"                          value="$(arg tracker_bbox_topic)" />
 
-        <arg name="inference_topic"                             value="$(arg obj_inference_output_topic)" />
         <arg name="tracked_frame_limit"                         value="15" />
         <arg name="missing_obj_frame_limit"                     value="15" />
 
@@ -124,12 +124,12 @@
     <!-- Particle Filter Based Point Cloud Tracking Luancher -->
     <include file="$(find arm_vs)/launch/track_and_align_obj_pointcloud.launch">
 
-        <arg name="icp_or_pf"                                   value="icp_or_pf" />
+        <arg name="icp_or_pf"                                   value="$(arg icp_or_pf)" />
 
-        <arg name="pose_estimation_pointcloud_input"            value="pose_estimation_pointcloud_input" />
-        <arg name="pose_estimation_pointcloud_ouput"            value="pose_estimation_pointcloud_ouput" />
-        <arg name="pose_estimation_pointcloud_frame"            value="pose_estimation_pointcloud_frame" />
-        <arg name="pose_estimation_template_filename"           value="pose_estimation_template_filename" />
+        <arg name="pose_estimation_pointcloud_input"            value="$(arg pose_estimation_pointcloud_input)" />
+        <arg name="pose_estimation_pointcloud_ouput"            value="$(arg pose_estimation_pointcloud_ouput)" />
+        <arg name="pose_estimation_pointcloud_frame"            value="$(arg pose_estimation_pointcloud_frame)" />
+        <arg name="pose_estimation_template_filename"           value="$(arg pose_estimation_template_filename)" />
 
     </include>
     
